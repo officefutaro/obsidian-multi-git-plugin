@@ -8,6 +8,10 @@ export class App {
     rename: jest.fn(),
     getFiles: jest.fn(() => []),
     getMarkdownFiles: jest.fn(() => []),
+    getAllLoadedFiles: jest.fn(() => [
+      { children: true, path: 'test-folder' },
+      { children: false, path: 'test-file.md' }
+    ]),
     adapter: {
       exists: jest.fn(),
       read: jest.fn(),
@@ -18,6 +22,7 @@ export class App {
       list: jest.fn(),
       stat: jest.fn(),
       getResourcePath: jest.fn(),
+      basePath: '/test/vault/path',
       process: {
         cwd: jest.fn(() => '/test/vault/path')
       }
@@ -49,6 +54,8 @@ export class Plugin {
     this.manifest = manifest;
   }
   
+  onload = jest.fn();
+  onunload = jest.fn();
   loadData = jest.fn();
   saveData = jest.fn();
   addCommand = jest.fn();
