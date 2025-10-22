@@ -1,0 +1,26 @@
+# Node modules
+node_modules/
+
+# Build output
+main.js
+main.js.map
+
+# Claude Code related (private)
+.claude/
+.claude-private/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Obsidian
+data.json
+.hotreload

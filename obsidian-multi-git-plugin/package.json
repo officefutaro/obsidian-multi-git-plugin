@@ -1,0 +1,22 @@
+{
+  "name": "obsidian-multi-git-plugin",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "esbuild src/main.ts --bundle --external:obsidian --outdir=. --target=es2016 --format=cjs --sourcemap --watch --platform=node",
+    "build": "esbuild src/main.ts --bundle --external:obsidian --outdir=. --target=es2016 --format=cjs --platform=node"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "Obsidian plugin for managing multiple Git repositories",
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "esbuild": "^0.25.11",
+    "obsidian": "^1.10.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3"
+  }
+}
