@@ -20,10 +20,16 @@ docs-shared/
 
 ## 📖 主要ドキュメント
 
+### プロジェクト仕様
+- **[PLUGIN-SPECIFICATION.md](./PLUGIN-SPECIFICATION.md)** - プラグイン全体仕様書
+- **[FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md)** - 機能要件定義書
+- **[TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md)** - 技術アーキテクチャ設計書
+- **[DEVELOPMENT-ROADMAP.md](./DEVELOPMENT-ROADMAP.md)** - 開発ロードマップ
+
 ### 開発ガイド
 - **[CLAUDE-MAIN.md](./CLAUDE-MAIN.md)** - Claude Code用の主要指示書
-- **[architecture/](./architecture/)** - システム設計とアーキテクチャ
-- **[api-specs/](./api-specs/)** - API仕様とインターフェース定義
+- **[IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md)** - 実装状況レポート
+- **[AI-TEST-SYSTEM.md](./AI-TEST-SYSTEM.md)** - Claude Code AIテストシステム
 
 ### テスト関連
 - **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** - テスト環境セットアップと実行手順
