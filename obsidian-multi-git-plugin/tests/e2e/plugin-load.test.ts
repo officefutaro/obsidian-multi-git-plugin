@@ -17,7 +17,7 @@ describe('E2E: Plugin Loading', () => {
     expect(fs.existsSync(mainJsPath)).toBe(true);
     
     const content = fs.readFileSync(mainJsPath, 'utf-8');
-    expect(content).toContain('ObsidianMultiGitPlugin');
+    expect(content).toContain('MultiGitPlugin');
   });
   
   test('should have valid manifest.json', () => {
@@ -25,7 +25,7 @@ describe('E2E: Plugin Loading', () => {
     expect(fs.existsSync(manifestPath)).toBe(true);
     
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-    expect(manifest.id).toBe('obsidian-multi-git-plugin');
+    expect(manifest.id).toBe('obsidian-multi-git');
     expect(manifest.name).toBeDefined();
     expect(manifest.version).toBeDefined();
     expect(manifest.minAppVersion).toBeDefined();

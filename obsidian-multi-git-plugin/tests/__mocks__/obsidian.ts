@@ -60,10 +60,12 @@ export class Plugin {
   saveData = jest.fn();
   addCommand = jest.fn();
   addRibbonIcon = jest.fn();
-  addStatusBarItem = jest.fn(() => ({
-    setText: jest.fn(),
-    createEl: jest.fn()
-  }));
+  addStatusBarItem = jest.fn(() => {
+    const mockElement = document.createElement('div');
+    mockElement.setText = jest.fn();
+    mockElement.createEl = jest.fn();
+    return mockElement;
+  });
   registerView = jest.fn();
   registerExtensions = jest.fn();
   registerEvent = jest.fn();
@@ -122,6 +124,40 @@ export class Modal {
   close = jest.fn();
   onOpen = jest.fn();
   onClose = jest.fn();
+}
+
+export class ItemView {
+  app: App;
+  containerEl: HTMLElement;
+  
+  constructor(leaf: any) {
+    this.app = new App();
+    this.containerEl = document.createElement('div');
+  }
+  
+  getViewType = jest.fn(() => 'test-view');
+  getDisplayText = jest.fn(() => 'Test View');
+  getIcon = jest.fn(() => 'test-icon');
+  onload = jest.fn();
+  onunload = jest.fn();
+  onOpen = jest.fn();
+  onClose = jest.fn();
+}
+
+export class ButtonComponent {
+  buttonEl: HTMLButtonElement;
+  
+  constructor(containerEl: HTMLElement) {
+    this.buttonEl = document.createElement('button');
+    containerEl.appendChild(this.buttonEl);
+  }
+  
+  setButtonText = jest.fn().mockReturnThis();
+  setCta = jest.fn().mockReturnThis();
+  onClick = jest.fn().mockReturnThis();
+  setTooltip = jest.fn().mockReturnThis();
+  setDisabled = jest.fn().mockReturnThis();
+  setIcon = jest.fn().mockReturnThis();
 }
 
 export class Setting {

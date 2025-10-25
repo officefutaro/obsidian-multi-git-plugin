@@ -1,17 +1,18 @@
-import { Plugin, Notice, Modal, App, Setting } from 'obsidian';
+import { Plugin, Notice, Modal, App, Setting, ItemView, WorkspaceLeaf, ButtonComponent } from 'obsidian';
 import { exec, ExecException } from 'child_process';
 import * as path from 'path';
 import { promisify } from 'util';
+import { GitManagerView, GIT_MANAGER_VIEW_TYPE } from './git-manager-view';
 
 const execAsync = promisify(exec);
 
-interface GitRepository {
+export interface GitRepository {
     path: string;
     name: string;
     isParent: boolean;
 }
 
-interface GitStatus {
+export interface GitStatus {
     modified: string[];
     added: string[];
     deleted: string[];
@@ -27,6 +28,12 @@ export default class MultiGitPlugin extends Plugin {
 
     async onload() {
         console.log('Loading Multi Git Manager plugin');
+
+        // Register the custom view
+        this.registerView(
+            GIT_MANAGER_VIEW_TYPE,
+            (leaf) => new GitManagerView(leaf, this)
+        );
 
         this.statusBarItem = this.addStatusBarItem();
         this.statusBarItem.setText('Git: Initializing...');
@@ -57,8 +64,14 @@ export default class MultiGitPlugin extends Plugin {
             callback: () => this.gitPull()
         });
 
-        this.addRibbonIcon('git-branch', 'Multi Git Manager', () => {
-            this.showGitStatusModal();
+        this.addCommand({
+            id: 'open-git-manager',
+            name: 'Open Git Manager',
+            callback: () => this.openGitManagerView()
+        });
+
+        this.addRibbonIcon('git-branch', 'Git Manager View', () => {
+            this.openGitManagerView();
         });
 
         this.registerInterval(
@@ -155,6 +168,17 @@ export default class MultiGitPlugin extends Plugin {
         }
         
         this.statusBarItem.setText(`Git: ${totalChanges} changes`);
+    }
+
+    async openGitManagerView() {
+        const existingLeaf = this.app.workspace.getLeavesOfType(GIT_MANAGER_VIEW_TYPE)[0];
+        if (existingLeaf) {
+            this.app.workspace.revealLeaf(existingLeaf);
+        } else {
+            const leaf = this.app.workspace.getRightLeaf(false);
+            await leaf.setViewState({ type: GIT_MANAGER_VIEW_TYPE, active: true });
+            this.app.workspace.revealLeaf(leaf);
+        }
     }
 
     async showGitStatusModal() {

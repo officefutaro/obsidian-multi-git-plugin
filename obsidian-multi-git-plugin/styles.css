@@ -77,3 +77,241 @@
 .git-operation-buttons button {
     padding: 8px 16px;
 }
+
+/* Git Manager View Styles */
+.git-manager-view {
+    padding: 16px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.git-manager-header {
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--background-modifier-border);
+    padding-bottom: 10px;
+}
+
+.git-manager-title {
+    margin: 0;
+    color: var(--text-accent);
+    font-size: 1.5em;
+}
+
+.git-manager-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+}
+
+.git-global-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.git-control-button,
+.git-action-button {
+    flex: 1;
+    min-width: 100px;
+}
+
+.git-control-button button,
+.git-action-button button {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--interactive-normal);
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.git-control-button button:hover,
+.git-action-button button:hover {
+    background: var(--interactive-hover);
+}
+
+.git-control-button button:active,
+.git-action-button button:active {
+    background: var(--interactive-active);
+}
+
+.git-repository-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.git-repository-item {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 16px;
+    background: var(--background-primary);
+    transition: box-shadow 0.2s ease;
+}
+
+.git-repository-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.git-repo-header {
+    margin-bottom: 12px;
+}
+
+.git-repo-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.git-repo-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--text-accent);
+}
+
+.git-repo-path {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    font-family: monospace;
+}
+
+.git-repo-status {
+    margin-bottom: 12px;
+    padding: 8px 0;
+}
+
+.git-branch-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.git-branch-name {
+    font-weight: bold;
+    color: var(--text-accent);
+}
+
+.git-ahead {
+    background: var(--text-success);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.git-behind {
+    background: var(--text-warning);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.git-changes {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.git-changes span {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.git-modified {
+    background: var(--background-modifier-form-field);
+    color: var(--text-warning);
+}
+
+.git-added {
+    background: var(--background-modifier-form-field);
+    color: var(--text-success);
+}
+
+.git-deleted {
+    background: var(--background-modifier-form-field);
+    color: var(--text-error);
+}
+
+.git-untracked {
+    background: var(--background-modifier-form-field);
+    color: var(--text-muted);
+}
+
+.git-clean {
+    background: var(--background-modifier-success);
+    color: var(--text-success);
+}
+
+.git-error {
+    background: var(--background-modifier-error);
+    color: var(--text-error);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.git-status-loading {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.git-repo-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.git-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.git-empty-subtitle {
+    font-size: 0.9em;
+    margin-top: 8px;
+}
+
+.git-commit-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: inherit;
+    resize: vertical;
+}
+
+.git-modal-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.git-modal-buttons button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--interactive-normal);
+    color: var(--text-normal);
+    cursor: pointer;
+}
+
+.git-modal-buttons button.mod-cta {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
