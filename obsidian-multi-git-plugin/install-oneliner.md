@@ -4,28 +4,28 @@
 
 ```powershell
 # PowerShellを管理者権限で開いて実行
-irm http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/install.ps1 | iex
+irm "http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/obsidian-multi-git-plugin/install.ps1" | iex
 ```
 
 または
 
 ```powershell
 # ダウンロードして実行
-Invoke-WebRequest -Uri "http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/install.ps1" -OutFile "$env:TEMP\install-mgm.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\install-mgm.ps1"
+Invoke-WebRequest -Uri "http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/obsidian-multi-git-plugin/install.ps1" -OutFile "$env:TEMP\install-mgm.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\install-mgm.ps1"
 ```
 
 ## macOS / Linux (Bash)
 
 ```bash
 # ワンライナーインストール
-curl -sSL http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/install.sh | bash
+curl -sSL "http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/obsidian-multi-git-plugin/install.sh" | bash
 ```
 
 または
 
 ```bash
 # wgetを使用
-wget -qO- http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/install.sh | bash
+wget -qO- "http://192.168.68.72:3000/futaro/obsidian-multi-git-plugin/raw/branch/master/obsidian-multi-git-plugin/install.sh" | bash
 ```
 
 ## 📋 手動でスクリプトを実行
