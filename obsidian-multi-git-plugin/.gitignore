@@ -1,8 +1,8 @@
 # Node modules
 node_modules/
 
-# Build output
-main.js
+# Build output (development)
+# main.js - needed for releases
 main.js.map
 
 # Claude Code related (private)
