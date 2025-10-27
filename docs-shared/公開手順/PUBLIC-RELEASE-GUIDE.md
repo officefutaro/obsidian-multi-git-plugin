@@ -34,7 +34,7 @@
 ### 2.1 新リポジトリ作成
 ```bash
 # 1. GitHubで新リポジトリ作成
-# リポジトリ名: obsidian-multi-git-plugin
+# GitHub リポジトリ: officefutaro/obsidian-multi-git-plugin
 # 説明: Manage multiple Git repositories in Obsidian
 # 公開設定: Public
 # README: チェック
@@ -48,7 +48,7 @@
 git remote -v
 
 # GitHubリモートを追加
-git remote add github https://github.com/[USERNAME]/obsidian-multi-git-plugin.git
+git remote add github git@github.com:officefutaro/obsidian-multi-git-plugin.git
 
 # GitHubへプッシュ
 git push github master

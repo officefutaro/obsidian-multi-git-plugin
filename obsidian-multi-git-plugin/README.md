@@ -175,8 +175,8 @@ obsidian-multi-git-plugin/
 
 ### 🆘 ヘルプが必要な場合
 - **📚 ドキュメント**: まずは[USER-GUIDE.md](USER-GUIDE.md)をご確認ください
-- **💬 Issues**: [GitHub Issues](https://github.com/your-repo/issues)でお気軽にご質問ください
-- **🔧 Discussions**: 使い方相談やアイデア共有は[Discussions](https://github.com/your-repo/discussions)へ
+- **💬 Issues**: [GitHub Issues](https://github.com/officefutaro/obsidian-multi-git-plugin/issues)でお気軽にご質問ください
+- **🔧 Discussions**: 使い方相談やアイデア共有は[Discussions](https://github.com/officefutaro/obsidian-multi-git-plugin/discussions)へ
 
 ### 🌟 このプラグインが役に立ちましたら
 - **⭐ Star**をつけてサポートしてください

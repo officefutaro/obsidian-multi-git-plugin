@@ -31,7 +31,7 @@
 cd D:\Project\2510_obsidianGit\obsidian-multi-git-plugin
 
 # GitHub リモート追加
-git remote add github https://github.com/[YOUR-USERNAME]/obsidian-multi-git-plugin.git
+git remote add github git@github.com:officefutaro/obsidian-multi-git-plugin.git
 
 # 初回プッシュ
 git push -u github master
@@ -145,7 +145,7 @@ jobs:
 
 #### 方法1: URL直接入力
 1. BRAT設定 → "Add Beta plugin"
-2. URL入力: `https://github.com/[USERNAME]/obsidian-multi-git-plugin`
+2. URL入力: `https://github.com/officefutaro/obsidian-multi-git-plugin`
 3. "Add Plugin" クリック
 
 #### 方法2: コマンドパレット
@@ -172,7 +172,7 @@ Obsidian Multi Git Plugin のクローズドベータテストにご協力いた
 
 ### インストール方法
 1. BRATプラグインをインストール
-2. 以下URLを追加: https://github.com/[USERNAME]/obsidian-multi-git-plugin
+2. 以下URLを追加: https://github.com/officefutaro/obsidian-multi-git-plugin
 3. プラグインを有効化
 
 ### お願いしたいこと
@@ -206,12 +206,12 @@ Manage multiple Git repositories directly from Obsidian!
 
 ### 🚀 How to Test
 1. Install BRAT plugin
-2. Add: https://github.com/[USERNAME]/obsidian-multi-git-plugin
+2. Add: https://github.com/officefutaro/obsidian-multi-git-plugin
 3. Enable & enjoy!
 
 ### 💬 Feedback
-- Issues: [GitHub Issues](https://github.com/[USERNAME]/obsidian-multi-git-plugin/issues)
-- Discussion: [GitHub Discussions](https://github.com/[USERNAME]/obsidian-multi-git-plugin/discussions)
+- Issues: [GitHub Issues](https://github.com/officefutaro/obsidian-multi-git-plugin/issues)
+- Discussion: [GitHub Discussions](https://github.com/officefutaro/obsidian-multi-git-plugin/discussions)
 
 Help us make this plugin better! 🙏
 ```
