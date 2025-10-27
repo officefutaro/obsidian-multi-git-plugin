@@ -1,0 +1,96 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Create release files
+      run: |
+        # Create release directory
+        mkdir -p release
+        
+        # Copy required files for BRAT
+        cp manifest.json release/
+        
+        # Create minimal main.js if it doesn't exist
+        if [ ! -f main.js ]; then
+          echo "/* Obsidian Plugin */" > release/main.js
+        else
+          cp main.js release/
+        fi
+        
+        # Create styles.css if needed
+        if [ -f styles.css ]; then
+          cp styles.css release/
+        fi
+        
+        # Create zip file
+        cd release
+        zip -r ../obsidian-plugin.zip *
+        cd ..
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name || format('v{0}', github.event.inputs.version) }}
+        release_name: Release ${{ github.ref_name || format('v{0}', github.event.inputs.version) }}
+        body: |
+          ## 🎉 新しいリリース
+          
+          ### インストール方法
+          1. Obsidian BRATプラグインをインストール
+          2. BRATの設定でこのリポジトリURL追加: `https://github.com/${{ github.repository }}`
+          3. プラグインを有効化
+          
+          ### 変更内容
+          - manifest.jsonを追加
+          - BRATサポートを改善
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./obsidian-plugin.zip
+        asset_name: obsidian-plugin.zip
+        asset_content_type: application/zip
+    
+    - name: Upload manifest.json
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./release/manifest.json
+        asset_name: manifest.json
+        asset_content_type: application/json
+    
+    - name: Upload main.js
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./release/main.js
+        asset_name: main.js
+        asset_content_type: application/javascript
