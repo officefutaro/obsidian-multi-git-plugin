@@ -1,226 +1,230 @@
-/* Obsidian Multi-Git Plugin Styles */
+/* Git Repository Manager - Original Design */
 
-.multi-git-modal {
-    min-width: 500px;
+.git-manager-title {
+    color: var(--text-accent);
+    margin-bottom: 20px;
+    text-align: center;
 }
 
-/* Control Panel Styles */
-.multi-git-button-container {
+.git-refresh-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0;
+    justify-content: flex-end;
+    margin-bottom: 15px;
 }
 
-.multi-git-primary-button {
+.git-refresh-button {
     background: var(--interactive-accent);
     color: var(--text-on-accent);
     border: none;
-    border-radius: 6px;
-    padding: 12px 20px;
-    font-weight: 600;
+    border-radius: 4px;
+    padding: 8px 16px;
     cursor: pointer;
-    font-size: 14px;
-    flex: 1;
-    min-width: 200px;
+    font-weight: 500;
 }
 
-.multi-git-primary-button:hover {
+.git-refresh-button:hover {
     background: var(--interactive-accent-hover);
 }
 
-.multi-git-secondary-button {
+.git-action-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.git-action-button {
     background: var(--background-modifier-border);
     color: var(--text-normal);
     border: 1px solid var(--background-modifier-border-hover);
-    border-radius: 6px;
-    padding: 10px 16px;
-    font-weight: 500;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.multi-git-secondary-button:hover {
-    background: var(--background-modifier-hover);
-}
-
-.multi-git-small-button {
-    background: var(--background-secondary);
-    color: var(--text-normal);
-    border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
-    padding: 6px 10px;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 5px;
-}
-
-.multi-git-small-button:hover {
-    background: var(--background-modifier-hover);
-}
-
-.multi-git-danger {
-    color: var(--text-error);
-}
-
-.multi-git-danger:hover {
-    background: var(--background-modifier-error);
-}
-
-.multi-git-repo-count {
-    font-size: 16px;
-    font-weight: 500;
-    margin: 15px 0;
-    color: var(--text-accent);
-}
-
-.multi-git-repo-list {
-    max-height: 300px;
-    overflow-y: auto;
-    margin: 15px 0;
-}
-
-.multi-git-repo-actions {
-    display: flex;
-    align-items: center;
-}
-
-.multi-git-empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
-.multi-git-auto-sync-status {
-    margin-top: 20px;
-    padding: 10px;
-    background: var(--background-secondary);
-    border-radius: 6px;
-    border-left: 4px solid var(--interactive-accent);
-}
-
-.multi-git-modal input {
-    width: 100%;
-    padding: 8px;
-    margin: 5px 0;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-}
-
-.multi-git-modal button {
-    padding: 8px 16px;
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border: none;
-    border-radius: 4px;
+    padding: 10px 20px;
     cursor: pointer;
     font-weight: 500;
-}
-
-.multi-git-modal button:hover {
-    background: var(--interactive-accent-hover);
-}
-
-.multi-git-status {
-    background: var(--background-primary-alt);
-    border-radius: 4px;
-    padding: 10px;
-    margin: 10px 0;
-    font-family: var(--font-monospace);
-}
-
-.multi-git-status pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-.multi-git-repo-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin: 5px 0;
-    background: var(--background-secondary);
-    border-radius: 4px;
-}
-
-.multi-git-repo-info {
     flex: 1;
 }
 
-.multi-git-repo-name {
-    font-weight: 600;
-    color: var(--text-accent);
+.git-action-button:hover {
+    background: var(--background-modifier-hover);
 }
 
-.multi-git-repo-path {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-top: 3px;
+.git-commit-all {
+    background: var(--color-orange);
+    color: white;
 }
 
-.multi-git-settings {
-    padding: 20px;
+.git-push-all {
+    background: var(--color-blue);
+    color: white;
 }
 
-.multi-git-settings h3 {
-    margin-top: 30px;
+.git-pull-all {
+    background: var(--color-green);
+    color: white;
+}
+
+.git-repo-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.git-repo-item {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 15px;
     margin-bottom: 15px;
+}
+
+.git-repo-header {
+    margin-bottom: 10px;
+}
+
+.git-repo-name {
     color: var(--text-accent);
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.multi-git-sync-indicator {
-    animation: rotate 2s linear infinite;
+.git-repo-path {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: var(--font-monospace);
 }
 
-@keyframes rotate {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.git-branch-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
-.multi-git-success {
+.git-branch {
+    background: var(--color-blue);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.git-ahead {
+    background: var(--color-green);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.git-behind {
+    background: var(--color-red);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.git-status-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.git-status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.git-modified {
+    background: var(--color-orange);
+    color: white;
+}
+
+.git-added {
+    background: var(--color-green);
+    color: white;
+}
+
+.git-deleted {
+    background: var(--color-red);
+    color: white;
+}
+
+.git-clean {
+    background: var(--background-modifier-success);
     color: var(--text-success);
 }
 
-.multi-git-error {
-    color: var(--text-error);
+.git-repo-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
-.multi-git-warning {
-    color: var(--text-warning);
+.git-repo-button {
+    background: var(--background-primary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.git-repo-button:hover {
+    background: var(--background-modifier-hover);
 }
 
 /* Status bar styling */
-.status-bar-item.multi-git-status-bar {
+.status-bar-item {
     cursor: pointer;
 }
 
-.status-bar-item.multi-git-status-bar:hover {
+.status-bar-item:hover {
     color: var(--text-accent);
 }
 
-/* Dark mode specific adjustments */
-.theme-dark .multi-git-modal input {
+/* Dark theme specific */
+.theme-dark .git-repo-item {
     background: var(--background-secondary-alt);
 }
 
-.theme-dark .multi-git-status {
+.theme-dark .git-repo-button {
     background: var(--background-secondary);
 }
 
-/* Light mode specific adjustments */
-.theme-light .multi-git-modal input {
-    border-color: var(--background-modifier-border-hover);
+/* Light theme specific */
+.theme-light .git-repo-item {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.theme-light .multi-git-repo-item {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.theme-light .git-action-button {
+    background: var(--background-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Modal styling */
+.modal {
+    min-width: 600px;
+    max-width: 800px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .git-action-container {
+        flex-direction: column;
+    }
+    
+    .git-status-info {
+        flex-direction: column;
+    }
+    
+    .git-repo-actions {
+        flex-direction: column;
+    }
 }

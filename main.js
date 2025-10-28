@@ -3,59 +3,28 @@ const { exec } = require('child_process');
 const path = require('path');
 
 const DEFAULT_SETTINGS = {
-    repositories: [],
-    autoSync: false,
-    syncInterval: 10,
+    autoDetect: true,
     showStatusBar: true,
-    commitMessage: 'Sync from Obsidian Multi-Git Plugin'
+    refreshInterval: 30
 };
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.1');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.3');
         
         await this.loadSettings();
         
-        // Add ribbon icon for main GUI
-        this.addRibbonIcon('git-branch', 'Multi-Git: Open Control Panel', () => {
-            new MultiGitControlPanel(this.app, this).open();
-        });
-        
-        // Add secondary ribbon icon for quick sync
-        this.addRibbonIcon('sync', 'Multi-Git: Quick Sync All', async () => {
-            await this.syncAllRepositories();
+        // Add ribbon icon
+        this.addRibbonIcon('git-branch', 'Git Repository Manager', () => {
+            new GitRepositoryManagerModal(this.app, this).open();
         });
         
         // Add commands
         this.addCommand({
-            id: 'sync-all-repos',
-            name: 'Sync all repositories',
-            callback: async () => {
-                await this.syncAllRepositories();
-            }
-        });
-        
-        this.addCommand({
-            id: 'open-control-panel',
-            name: 'Open Multi-Git Control Panel',
+            id: 'show-git-manager',
+            name: 'Show Git Repository Manager',
             callback: () => {
-                new MultiGitControlPanel(this.app, this).open();
-            }
-        });
-        
-        this.addCommand({
-            id: 'add-repository',
-            name: 'Add repository to manage',
-            callback: () => {
-                new AddRepoModal(this.app, this).open();
-            }
-        });
-        
-        this.addCommand({
-            id: 'show-git-status',
-            name: 'Show status for all repositories',
-            callback: async () => {
-                await this.showAllStatus();
+                new GitRepositoryManagerModal(this.app, this).open();
             }
         });
         
@@ -68,15 +37,13 @@ class MultiGitPlugin extends Plugin {
             this.updateStatusBar();
         }
         
-        // Auto sync
-        if (this.settings.autoSync) {
-            this.startAutoSync();
-        }
+        // Auto refresh
+        this.startAutoRefresh();
     }
     
     onunload() {
         console.log('Unloading Obsidian Multi-Git Plugin');
-        this.stopAutoSync();
+        this.stopAutoRefresh();
     }
     
     async loadSettings() {
@@ -87,57 +54,78 @@ class MultiGitPlugin extends Plugin {
         await this.saveData(this.settings);
     }
     
-    async syncAllRepositories() {
-        new Notice('🔄 Starting sync for all repositories...');
+    async detectRepositories() {
+        const repositories = [];
         
-        for (const repo of this.settings.repositories) {
-            await this.syncRepository(repo);
+        // Detect Vault repository
+        const vaultPath = this.app.vault.adapter.basePath;
+        if (await this.isGitRepository(vaultPath)) {
+            repositories.push({
+                name: 'Vault',
+                path: vaultPath,
+                isParent: false
+            });
         }
         
-        new Notice('✅ All repositories synced!');
-        this.updateStatusBar();
+        // Detect Parent repository
+        const parentPath = path.dirname(vaultPath);
+        if (await this.isGitRepository(parentPath)) {
+            repositories.push({
+                name: 'Parent (Claude Code)',
+                path: parentPath,
+                isParent: true
+            });
+        }
+        
+        return repositories;
     }
     
-    async syncRepository(repo) {
+    async isGitRepository(dirPath) {
         try {
-            new Notice(`📦 Syncing ${repo.name}...`);
-            
-            // Pull changes
-            await this.executeGitCommand(repo.path, 'git pull');
-            
-            // Add all changes
-            await this.executeGitCommand(repo.path, 'git add -A');
-            
-            // Commit if there are changes
-            const status = await this.executeGitCommand(repo.path, 'git status --porcelain');
-            if (status.trim()) {
-                const commitMsg = repo.commitMessage || this.settings.commitMessage;
-                await this.executeGitCommand(repo.path, `git commit -m "${commitMsg}"`);
-            }
-            
-            // Push changes
-            await this.executeGitCommand(repo.path, 'git push');
-            
-            new Notice(`✅ ${repo.name} synced successfully`);
+            await this.executeGitCommand(dirPath, 'git rev-parse --git-dir');
+            return true;
         } catch (error) {
-            new Notice(`❌ Error syncing ${repo.name}: ${error.message}`);
-            console.error(error);
+            return false;
         }
     }
     
-    async showAllStatus() {
-        const statuses = [];
-        
-        for (const repo of this.settings.repositories) {
-            try {
-                const status = await this.executeGitCommand(repo.path, 'git status --short');
-                statuses.push(`📁 ${repo.name}:\n${status || 'Clean'}\n`);
-            } catch (error) {
-                statuses.push(`📁 ${repo.name}: Error - ${error.message}\n`);
-            }
+    async getGitStatus(repoPath) {
+        try {
+            const [statusOutput, branchOutput, aheadBehindOutput] = await Promise.all([
+                this.executeGitCommand(repoPath, 'git status --porcelain'),
+                this.executeGitCommand(repoPath, 'git branch --show-current'),
+                this.executeGitCommand(repoPath, 'git rev-list --left-right --count HEAD...@{upstream}').catch(() => '0\t0')
+            ]);
+            
+            const statusLines = statusOutput.trim().split('\n').filter(line => line);
+            const modified = statusLines.filter(line => line.startsWith(' M')).length;
+            const added = statusLines.filter(line => line.startsWith('A') || line.startsWith('??')).length;
+            const deleted = statusLines.filter(line => line.startsWith(' D')).length;
+            const branch = branchOutput.trim();
+            
+            const [ahead, behind] = aheadBehindOutput.trim().split('\t').map(n => parseInt(n) || 0);
+            
+            return {
+                modified,
+                added,
+                deleted,
+                branch,
+                ahead,
+                behind,
+                totalChanges: modified + added + deleted
+            };
+        } catch (error) {
+            return {
+                modified: 0,
+                added: 0,
+                deleted: 0,
+                branch: 'unknown',
+                ahead: 0,
+                behind: 0,
+                totalChanges: 0,
+                error: error.message
+            };
         }
-        
-        new StatusModal(this.app, statuses.join('\n')).open();
     }
     
     executeGitCommand(repoPath, command) {
@@ -152,218 +140,271 @@ class MultiGitPlugin extends Plugin {
         });
     }
     
-    startAutoSync() {
-        this.stopAutoSync();
-        this.autoSyncInterval = window.setInterval(
-            () => this.syncAllRepositories(),
-            this.settings.syncInterval * 60 * 1000
+    async commitRepository(repoPath, message) {
+        try {
+            await this.executeGitCommand(repoPath, 'git add -A');
+            await this.executeGitCommand(repoPath, `git commit -m "${message}"`);
+            new Notice('✅ Commit successful');
+        } catch (error) {
+            new Notice(`❌ Commit failed: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    async pushRepository(repoPath) {
+        try {
+            await this.executeGitCommand(repoPath, 'git push');
+            new Notice('✅ Push successful');
+        } catch (error) {
+            new Notice(`❌ Push failed: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    async pullRepository(repoPath) {
+        try {
+            await this.executeGitCommand(repoPath, 'git pull');
+            new Notice('✅ Pull successful');
+        } catch (error) {
+            new Notice(`❌ Pull failed: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    startAutoRefresh() {
+        this.stopAutoRefresh();
+        this.refreshInterval = window.setInterval(
+            () => this.updateStatusBar(),
+            this.settings.refreshInterval * 1000
         );
     }
     
-    stopAutoSync() {
-        if (this.autoSyncInterval) {
-            window.clearInterval(this.autoSyncInterval);
-            this.autoSyncInterval = null;
+    stopAutoRefresh() {
+        if (this.refreshInterval) {
+            window.clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
         }
     }
     
-    updateStatusBar() {
-        if (this.statusBarItem) {
-            const repoCount = this.settings.repositories.length;
-            this.statusBarItem.setText(`📦 ${repoCount} repos`);
+    async updateStatusBar() {
+        if (!this.statusBarItem) return;
+        
+        try {
+            const repositories = await this.detectRepositories();
+            let totalChanges = 0;
+            
+            for (const repo of repositories) {
+                const status = await this.getGitStatus(repo.path);
+                totalChanges += status.totalChanges;
+            }
+            
+            this.statusBarItem.setText(`Git: ${totalChanges} changes`);
+        } catch (error) {
+            this.statusBarItem.setText('Git: Error');
         }
     }
 }
 
-class MultiGitControlPanel extends Modal {
+class GitRepositoryManagerModal extends Modal {
     constructor(app, plugin) {
         super(app);
         this.plugin = plugin;
+        this.repositories = [];
     }
     
-    onOpen() {
+    async onOpen() {
         const { contentEl } = this;
         contentEl.empty();
         
-        contentEl.createEl('h1', { text: '🚀 Multi-Git Control Panel' });
+        // Title
+        contentEl.createEl('h1', { text: 'Git Repository Manager', cls: 'git-manager-title' });
         
-        // Repository count display
-        const repoCount = this.plugin.settings.repositories.length;
-        const countEl = contentEl.createEl('div', { 
-            text: `📦 Managed Repositories: ${repoCount}`,
-            cls: 'multi-git-repo-count'
+        // Refresh button
+        const refreshContainer = contentEl.createEl('div', { cls: 'git-refresh-container' });
+        const refreshBtn = refreshContainer.createEl('button', { 
+            text: '🔄 Refresh',
+            cls: 'git-refresh-button'
         });
+        refreshBtn.onclick = () => this.refreshRepositories();
         
-        // Main action buttons
-        const buttonContainer = contentEl.createEl('div', { cls: 'multi-git-button-container' });
+        // Action buttons
+        const actionContainer = contentEl.createEl('div', { cls: 'git-action-container' });
         
-        const syncAllBtn = buttonContainer.createEl('button', { 
-            text: '🔄 Sync All Repositories',
-            cls: 'multi-git-primary-button'
+        const commitAllBtn = actionContainer.createEl('button', { 
+            text: '📝 Commit All',
+            cls: 'git-action-button git-commit-all'
         });
-        syncAllBtn.onclick = async () => {
-            await this.plugin.syncAllRepositories();
-        };
+        commitAllBtn.onclick = () => this.commitAll();
         
-        const addRepoBtn = buttonContainer.createEl('button', { 
-            text: '➕ Add Repository',
-            cls: 'multi-git-secondary-button'
+        const pushAllBtn = actionContainer.createEl('button', { 
+            text: '⬆️ Push All',
+            cls: 'git-action-button git-push-all'
         });
-        addRepoBtn.onclick = () => {
-            this.close();
-            new AddRepoModal(this.app, this.plugin).open();
-        };
+        pushAllBtn.onclick = () => this.pushAll();
         
-        const statusBtn = buttonContainer.createEl('button', { 
-            text: '📊 Show Status',
-            cls: 'multi-git-secondary-button'
+        const pullAllBtn = actionContainer.createEl('button', { 
+            text: '⬇️ Pull All',
+            cls: 'git-action-button git-pull-all'
         });
-        statusBtn.onclick = async () => {
-            await this.plugin.showAllStatus();
-        };
+        pullAllBtn.onclick = () => this.pullAll();
         
-        const settingsBtn = buttonContainer.createEl('button', { 
-            text: '⚙️ Settings',
-            cls: 'multi-git-secondary-button'
-        });
-        settingsBtn.onclick = () => {
-            this.close();
-            // Open settings tab
-            this.app.setting.open();
-            this.app.setting.openTabById('obsidian-multi-git-plugin');
-        };
+        // Repository container
+        this.repoContainer = contentEl.createEl('div', { cls: 'git-repo-container' });
         
-        // Repository list
-        if (repoCount > 0) {
-            contentEl.createEl('h3', { text: 'Repository List' });
-            
-            const repoList = contentEl.createEl('div', { cls: 'multi-git-repo-list' });
-            
-            for (let i = 0; i < this.plugin.settings.repositories.length; i++) {
-                const repo = this.plugin.settings.repositories[i];
-                const repoEl = repoList.createEl('div', { cls: 'multi-git-repo-item' });
-                
-                const infoEl = repoEl.createEl('div', { cls: 'multi-git-repo-info' });
-                infoEl.createEl('div', { text: repo.name, cls: 'multi-git-repo-name' });
-                infoEl.createEl('div', { text: repo.path, cls: 'multi-git-repo-path' });
-                
-                const actionEl = repoEl.createEl('div', { cls: 'multi-git-repo-actions' });
-                
-                const syncBtn = actionEl.createEl('button', { 
-                    text: '🔄',
-                    cls: 'multi-git-small-button',
-                    attr: { title: 'Sync this repository' }
-                });
-                syncBtn.onclick = async () => {
-                    await this.plugin.syncRepository(repo);
-                };
-                
-                const removeBtn = actionEl.createEl('button', { 
-                    text: '🗑️',
-                    cls: 'multi-git-small-button multi-git-danger',
-                    attr: { title: 'Remove this repository' }
-                });
-                removeBtn.onclick = async () => {
-                    this.plugin.settings.repositories.splice(i, 1);
-                    await this.plugin.saveSettings();
-                    this.plugin.updateStatusBar();
-                    this.onOpen(); // Refresh the panel
-                };
-            }
-        } else {
-            contentEl.createEl('p', { 
-                text: '📝 No repositories added yet. Click "Add Repository" to get started!',
-                cls: 'multi-git-empty-state'
+        // Load repositories
+        await this.refreshRepositories();
+    }
+    
+    async refreshRepositories() {
+        this.repositories = await this.plugin.detectRepositories();
+        this.renderRepositories();
+    }
+    
+    async renderRepositories() {
+        this.repoContainer.empty();
+        
+        for (const repo of this.repositories) {
+            const status = await this.plugin.getGitStatus(repo.path);
+            this.renderRepository(repo, status);
+        }
+    }
+    
+    renderRepository(repo, status) {
+        const repoEl = this.repoContainer.createEl('div', { cls: 'git-repo-item' });
+        
+        // Repository header
+        const headerEl = repoEl.createEl('div', { cls: 'git-repo-header' });
+        headerEl.createEl('h3', { text: repo.name, cls: 'git-repo-name' });
+        headerEl.createEl('div', { text: repo.path, cls: 'git-repo-path' });
+        
+        // Branch info
+        const branchEl = repoEl.createEl('div', { cls: 'git-branch-info' });
+        branchEl.createEl('span', { text: `🌿 ${status.branch}`, cls: 'git-branch' });
+        
+        if (status.ahead > 0) {
+            branchEl.createEl('span', { text: `↑${status.ahead}`, cls: 'git-ahead' });
+        }
+        if (status.behind > 0) {
+            branchEl.createEl('span', { text: `↓${status.behind}`, cls: 'git-behind' });
+        }
+        
+        // Status info
+        const statusEl = repoEl.createEl('div', { cls: 'git-status-info' });
+        
+        if (status.modified > 0) {
+            statusEl.createEl('span', { 
+                text: `📝 ${status.modified} modified`, 
+                cls: 'git-status git-modified' 
             });
         }
         
-        // Auto-sync status
-        const autoSyncEl = contentEl.createEl('div', { cls: 'multi-git-auto-sync-status' });
-        const autoSyncText = this.plugin.settings.autoSync 
-            ? `✅ Auto-sync: ON (every ${this.plugin.settings.syncInterval} min)`
-            : '⏸️ Auto-sync: OFF';
-        autoSyncEl.createEl('p', { text: autoSyncText });
+        if (status.added > 0) {
+            statusEl.createEl('span', { 
+                text: `➕ ${status.added} added`, 
+                cls: 'git-status git-added' 
+            });
+        }
+        
+        if (status.deleted > 0) {
+            statusEl.createEl('span', { 
+                text: `🗑️ ${status.deleted} deleted`, 
+                cls: 'git-status git-deleted' 
+            });
+        }
+        
+        if (status.totalChanges === 0) {
+            statusEl.createEl('span', { 
+                text: '✅ Clean', 
+                cls: 'git-status git-clean' 
+            });
+        }
+        
+        // Action buttons
+        const actionsEl = repoEl.createEl('div', { cls: 'git-repo-actions' });
+        
+        const commitBtn = actionsEl.createEl('button', { 
+            text: '📝 Commit',
+            cls: 'git-repo-button'
+        });
+        commitBtn.onclick = () => this.commitRepository(repo);
+        
+        const pushBtn = actionsEl.createEl('button', { 
+            text: '⬆️ Push',
+            cls: 'git-repo-button'
+        });
+        pushBtn.onclick = () => this.pushRepository(repo);
+        
+        const pullBtn = actionsEl.createEl('button', { 
+            text: '⬇️ Pull',
+            cls: 'git-repo-button'
+        });
+        pullBtn.onclick = () => this.pullRepository(repo);
     }
     
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
-}
-
-class AddRepoModal extends Modal {
-    constructor(app, plugin) {
-        super(app);
-        this.plugin = plugin;
-    }
-    
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.empty();
-        
-        contentEl.createEl('h2', { text: 'Add Git Repository' });
-        
-        const nameInput = contentEl.createEl('input', {
-            type: 'text',
-            placeholder: 'Repository name'
-        });
-        nameInput.style.width = '100%';
-        nameInput.style.marginBottom = '10px';
-        
-        const pathInput = contentEl.createEl('input', {
-            type: 'text',
-            placeholder: 'Repository path (absolute)'
-        });
-        pathInput.style.width = '100%';
-        pathInput.style.marginBottom = '10px';
-        
-        const commitMsgInput = contentEl.createEl('input', {
-            type: 'text',
-            placeholder: 'Custom commit message (optional)'
-        });
-        commitMsgInput.style.width = '100%';
-        commitMsgInput.style.marginBottom = '20px';
-        
-        const addButton = contentEl.createEl('button', { text: 'Add Repository' });
-        addButton.onclick = async () => {
-            if (nameInput.value && pathInput.value) {
-                this.plugin.settings.repositories.push({
-                    name: nameInput.value,
-                    path: pathInput.value,
-                    commitMessage: commitMsgInput.value || ''
-                });
-                await this.plugin.saveSettings();
-                this.plugin.updateStatusBar();
-                new Notice(`Repository ${nameInput.value} added!`);
-                this.close();
-            } else {
-                new Notice('Please fill in name and path');
+    async commitRepository(repo) {
+        const message = prompt('Enter commit message:', 'Auto commit from Obsidian');
+        if (message) {
+            try {
+                await this.plugin.commitRepository(repo.path, message);
+                await this.refreshRepositories();
+            } catch (error) {
+                // Error already handled in plugin
             }
-        };
+        }
     }
     
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
-}
-
-class StatusModal extends Modal {
-    constructor(app, status) {
-        super(app);
-        this.status = status;
+    async pushRepository(repo) {
+        try {
+            await this.plugin.pushRepository(repo.path);
+            await this.refreshRepositories();
+        } catch (error) {
+            // Error already handled in plugin
+        }
     }
     
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.empty();
-        
-        contentEl.createEl('h2', { text: 'Git Status - All Repositories' });
-        
-        const pre = contentEl.createEl('pre');
-        pre.style.overflow = 'auto';
-        pre.style.maxHeight = '400px';
-        pre.setText(this.status);
+    async pullRepository(repo) {
+        try {
+            await this.plugin.pullRepository(repo.path);
+            await this.refreshRepositories();
+        } catch (error) {
+            // Error already handled in plugin
+        }
+    }
+    
+    async commitAll() {
+        const message = prompt('Enter commit message for all repositories:', 'Auto commit from Obsidian');
+        if (message) {
+            for (const repo of this.repositories) {
+                try {
+                    await this.plugin.commitRepository(repo.path, message);
+                } catch (error) {
+                    // Continue with next repository
+                }
+            }
+            await this.refreshRepositories();
+        }
+    }
+    
+    async pushAll() {
+        for (const repo of this.repositories) {
+            try {
+                await this.plugin.pushRepository(repo.path);
+            } catch (error) {
+                // Continue with next repository
+            }
+        }
+        await this.refreshRepositories();
+    }
+    
+    async pullAll() {
+        for (const repo of this.repositories) {
+            try {
+                await this.plugin.pullRepository(repo.path);
+            } catch (error) {
+                // Continue with next repository
+            }
+        }
+        await this.refreshRepositories();
     }
     
     onClose() {
@@ -384,56 +425,19 @@ class MultiGitSettingTab extends PluginSettingTab {
         
         containerEl.createEl('h2', { text: 'Multi-Git Plugin Settings' });
         
-        // Auto sync toggle
         new Setting(containerEl)
-            .setName('Auto sync')
-            .setDesc('Automatically sync repositories at regular intervals')
+            .setName('Auto-detect repositories')
+            .setDesc('Automatically detect Git repositories')
             .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.autoSync)
+                .setValue(this.plugin.settings.autoDetect)
                 .onChange(async (value) => {
-                    this.plugin.settings.autoSync = value;
-                    await this.plugin.saveSettings();
-                    if (value) {
-                        this.plugin.startAutoSync();
-                    } else {
-                        this.plugin.stopAutoSync();
-                    }
-                }));
-        
-        // Sync interval
-        new Setting(containerEl)
-            .setName('Sync interval')
-            .setDesc('Interval in minutes for auto sync')
-            .addText(text => text
-                .setPlaceholder('10')
-                .setValue(String(this.plugin.settings.syncInterval))
-                .onChange(async (value) => {
-                    const interval = parseInt(value);
-                    if (!isNaN(interval) && interval > 0) {
-                        this.plugin.settings.syncInterval = interval;
-                        await this.plugin.saveSettings();
-                        if (this.plugin.settings.autoSync) {
-                            this.plugin.startAutoSync();
-                        }
-                    }
-                }));
-        
-        // Default commit message
-        new Setting(containerEl)
-            .setName('Default commit message')
-            .setDesc('Default message for commits')
-            .addText(text => text
-                .setPlaceholder('Sync from Obsidian')
-                .setValue(this.plugin.settings.commitMessage)
-                .onChange(async (value) => {
-                    this.plugin.settings.commitMessage = value;
+                    this.plugin.settings.autoDetect = value;
                     await this.plugin.saveSettings();
                 }));
         
-        // Status bar
         new Setting(containerEl)
             .setName('Show status bar')
-            .setDesc('Show repository count in status bar')
+            .setDesc('Show Git status in status bar')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.showStatusBar)
                 .onChange(async (value) => {
@@ -441,34 +445,19 @@ class MultiGitSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
         
-        // Repository list
-        containerEl.createEl('h3', { text: 'Managed Repositories' });
-        
-        if (this.plugin.settings.repositories.length === 0) {
-            containerEl.createEl('p', { text: 'No repositories added yet.' });
-        } else {
-            for (let i = 0; i < this.plugin.settings.repositories.length; i++) {
-                const repo = this.plugin.settings.repositories[i];
-                new Setting(containerEl)
-                    .setName(repo.name)
-                    .setDesc(repo.path)
-                    .addButton(button => button
-                        .setButtonText('Remove')
-                        .onClick(async () => {
-                            this.plugin.settings.repositories.splice(i, 1);
-                            await this.plugin.saveSettings();
-                            this.plugin.updateStatusBar();
-                            this.display();
-                        }));
-            }
-        }
-        
-        // Add repository button
         new Setting(containerEl)
-            .addButton(button => button
-                .setButtonText('Add Repository')
-                .onClick(() => {
-                    new AddRepoModal(this.app, this.plugin).open();
+            .setName('Refresh interval')
+            .setDesc('Status refresh interval in seconds')
+            .addText(text => text
+                .setPlaceholder('30')
+                .setValue(String(this.plugin.settings.refreshInterval))
+                .onChange(async (value) => {
+                    const interval = parseInt(value);
+                    if (!isNaN(interval) && interval > 0) {
+                        this.plugin.settings.refreshInterval = interval;
+                        await this.plugin.saveSettings();
+                        this.plugin.startAutoRefresh();
+                    }
                 }));
     }
 }
