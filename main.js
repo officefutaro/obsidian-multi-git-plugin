@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.4');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.5');
         
         await this.loadSettings();
         
@@ -230,6 +230,8 @@ class GitRepositoryManagerModal extends Modal {
         super(app);
         this.plugin = plugin;
         this.repositories = [];
+        // Add custom class to modal
+        this.modalEl.addClass('git-repository-manager-modal');
     }
     
     async onOpen() {
@@ -295,7 +297,10 @@ class GitRepositoryManagerModal extends Modal {
         // Repository header
         const headerEl = repoEl.createEl('div', { cls: 'git-repo-header' });
         headerEl.createEl('h3', { text: repo.name, cls: 'git-repo-name' });
-        headerEl.createEl('div', { text: repo.path, cls: 'git-repo-path' });
+        
+        // Full path display - scrollable if too long
+        const pathEl = headerEl.createEl('div', { cls: 'git-repo-path-container' });
+        pathEl.createEl('div', { text: repo.path, cls: 'git-repo-path', attr: { title: repo.path } });
         
         // Branch info
         const branchEl = repoEl.createEl('div', { cls: 'git-branch-info' });
