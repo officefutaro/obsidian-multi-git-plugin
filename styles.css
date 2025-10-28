@@ -1,0 +1,130 @@
+/* Obsidian Multi-Git Plugin Styles */
+
+.multi-git-modal {
+    min-width: 500px;
+}
+
+.multi-git-modal input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.multi-git-modal button {
+    padding: 8px 16px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.multi-git-modal button:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.multi-git-status {
+    background: var(--background-primary-alt);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: var(--font-monospace);
+}
+
+.multi-git-status pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.multi-git-repo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin: 5px 0;
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.multi-git-repo-info {
+    flex: 1;
+}
+
+.multi-git-repo-name {
+    font-weight: 600;
+    color: var(--text-accent);
+}
+
+.multi-git-repo-path {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.multi-git-settings {
+    padding: 20px;
+}
+
+.multi-git-settings h3 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: var(--text-accent);
+}
+
+.multi-git-sync-indicator {
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.multi-git-success {
+    color: var(--text-success);
+}
+
+.multi-git-error {
+    color: var(--text-error);
+}
+
+.multi-git-warning {
+    color: var(--text-warning);
+}
+
+/* Status bar styling */
+.status-bar-item.multi-git-status-bar {
+    cursor: pointer;
+}
+
+.status-bar-item.multi-git-status-bar:hover {
+    color: var(--text-accent);
+}
+
+/* Dark mode specific adjustments */
+.theme-dark .multi-git-modal input {
+    background: var(--background-secondary-alt);
+}
+
+.theme-dark .multi-git-status {
+    background: var(--background-secondary);
+}
+
+/* Light mode specific adjustments */
+.theme-light .multi-git-modal input {
+    border-color: var(--background-modifier-border-hover);
+}
+
+.theme-light .multi-git-repo-item {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}

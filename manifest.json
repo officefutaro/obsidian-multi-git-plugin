@@ -1,11 +1,11 @@
 {
   "id": "obsidian-multi-git-plugin",
-  "name": "Test Obsidian Plugin",
-  "version": "1.0.0",
+  "name": "Obsidian Multi-Git Plugin",
+  "version": "0.9.1",
   "minAppVersion": "0.15.0",
-  "description": "複数のGitリポジトリを管理するObsidianプラグイン",
+  "description": "Manage multiple Git repositories within Obsidian - 複数のGitリポジトリを管理",
   "author": "officefutaro",
   "authorUrl": "https://github.com/officefutaro",
   "fundingUrl": "",
-  "isDesktopOnly": false
+  "isDesktopOnly": true
 }
