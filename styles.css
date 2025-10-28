@@ -4,6 +4,102 @@
     min-width: 500px;
 }
 
+/* Control Panel Styles */
+.multi-git-button-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.multi-git-primary-button {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 6px;
+    padding: 12px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.multi-git-primary-button:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.multi-git-secondary-button {
+    background: var(--background-modifier-border);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border-hover);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.multi-git-secondary-button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.multi-git-small-button {
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.multi-git-small-button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.multi-git-danger {
+    color: var(--text-error);
+}
+
+.multi-git-danger:hover {
+    background: var(--background-modifier-error);
+}
+
+.multi-git-repo-count {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 15px 0;
+    color: var(--text-accent);
+}
+
+.multi-git-repo-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.multi-git-repo-actions {
+    display: flex;
+    align-items: center;
+}
+
+.multi-git-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.multi-git-auto-sync-status {
+    margin-top: 20px;
+    padding: 10px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    border-left: 4px solid var(--interactive-accent);
+}
+
 .multi-git-modal input {
     width: 100%;
     padding: 8px;

@@ -16,8 +16,13 @@ class MultiGitPlugin extends Plugin {
         
         await this.loadSettings();
         
-        // Add ribbon icon
-        this.addRibbonIcon('git-branch', 'Multi-Git: Sync All', async () => {
+        // Add ribbon icon for main GUI
+        this.addRibbonIcon('git-branch', 'Multi-Git: Open Control Panel', () => {
+            new MultiGitControlPanel(this.app, this).open();
+        });
+        
+        // Add secondary ribbon icon for quick sync
+        this.addRibbonIcon('sync', 'Multi-Git: Quick Sync All', async () => {
             await this.syncAllRepositories();
         });
         
@@ -27,6 +32,14 @@ class MultiGitPlugin extends Plugin {
             name: 'Sync all repositories',
             callback: async () => {
                 await this.syncAllRepositories();
+            }
+        });
+        
+        this.addCommand({
+            id: 'open-control-panel',
+            name: 'Open Multi-Git Control Panel',
+            callback: () => {
+                new MultiGitControlPanel(this.app, this).open();
             }
         });
         
@@ -159,6 +172,122 @@ class MultiGitPlugin extends Plugin {
             const repoCount = this.settings.repositories.length;
             this.statusBarItem.setText(`📦 ${repoCount} repos`);
         }
+    }
+}
+
+class MultiGitControlPanel extends Modal {
+    constructor(app, plugin) {
+        super(app);
+        this.plugin = plugin;
+    }
+    
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        
+        contentEl.createEl('h1', { text: '🚀 Multi-Git Control Panel' });
+        
+        // Repository count display
+        const repoCount = this.plugin.settings.repositories.length;
+        const countEl = contentEl.createEl('div', { 
+            text: `📦 Managed Repositories: ${repoCount}`,
+            cls: 'multi-git-repo-count'
+        });
+        
+        // Main action buttons
+        const buttonContainer = contentEl.createEl('div', { cls: 'multi-git-button-container' });
+        
+        const syncAllBtn = buttonContainer.createEl('button', { 
+            text: '🔄 Sync All Repositories',
+            cls: 'multi-git-primary-button'
+        });
+        syncAllBtn.onclick = async () => {
+            await this.plugin.syncAllRepositories();
+        };
+        
+        const addRepoBtn = buttonContainer.createEl('button', { 
+            text: '➕ Add Repository',
+            cls: 'multi-git-secondary-button'
+        });
+        addRepoBtn.onclick = () => {
+            this.close();
+            new AddRepoModal(this.app, this.plugin).open();
+        };
+        
+        const statusBtn = buttonContainer.createEl('button', { 
+            text: '📊 Show Status',
+            cls: 'multi-git-secondary-button'
+        });
+        statusBtn.onclick = async () => {
+            await this.plugin.showAllStatus();
+        };
+        
+        const settingsBtn = buttonContainer.createEl('button', { 
+            text: '⚙️ Settings',
+            cls: 'multi-git-secondary-button'
+        });
+        settingsBtn.onclick = () => {
+            this.close();
+            // Open settings tab
+            this.app.setting.open();
+            this.app.setting.openTabById('obsidian-multi-git-plugin');
+        };
+        
+        // Repository list
+        if (repoCount > 0) {
+            contentEl.createEl('h3', { text: 'Repository List' });
+            
+            const repoList = contentEl.createEl('div', { cls: 'multi-git-repo-list' });
+            
+            for (let i = 0; i < this.plugin.settings.repositories.length; i++) {
+                const repo = this.plugin.settings.repositories[i];
+                const repoEl = repoList.createEl('div', { cls: 'multi-git-repo-item' });
+                
+                const infoEl = repoEl.createEl('div', { cls: 'multi-git-repo-info' });
+                infoEl.createEl('div', { text: repo.name, cls: 'multi-git-repo-name' });
+                infoEl.createEl('div', { text: repo.path, cls: 'multi-git-repo-path' });
+                
+                const actionEl = repoEl.createEl('div', { cls: 'multi-git-repo-actions' });
+                
+                const syncBtn = actionEl.createEl('button', { 
+                    text: '🔄',
+                    cls: 'multi-git-small-button',
+                    attr: { title: 'Sync this repository' }
+                });
+                syncBtn.onclick = async () => {
+                    await this.plugin.syncRepository(repo);
+                };
+                
+                const removeBtn = actionEl.createEl('button', { 
+                    text: '🗑️',
+                    cls: 'multi-git-small-button multi-git-danger',
+                    attr: { title: 'Remove this repository' }
+                });
+                removeBtn.onclick = async () => {
+                    this.plugin.settings.repositories.splice(i, 1);
+                    await this.plugin.saveSettings();
+                    this.plugin.updateStatusBar();
+                    this.onOpen(); // Refresh the panel
+                };
+            }
+        } else {
+            contentEl.createEl('p', { 
+                text: '📝 No repositories added yet. Click "Add Repository" to get started!',
+                cls: 'multi-git-empty-state'
+            });
+        }
+        
+        // Auto-sync status
+        const autoSyncEl = contentEl.createEl('div', { cls: 'multi-git-auto-sync-status' });
+        const autoSyncText = this.plugin.settings.autoSync 
+            ? `✅ Auto-sync: ON (every ${this.plugin.settings.syncInterval} min)`
+            : '⏸️ Auto-sync: OFF';
+        autoSyncEl.createEl('p', { text: autoSyncText });
+    }
+    
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
     }
 }
 
