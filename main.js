@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.5');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.6');
         
         await this.loadSettings();
         
@@ -69,22 +69,26 @@ class MultiGitPlugin extends Plugin {
         }
         
         // Detect subdirectories in Vault (like Novels)
-        try {
-            const entries = await fs.readdir(vaultPath, { withFileTypes: true });
-            for (const entry of entries) {
-                if (entry.isDirectory()) {
-                    const subPath = path.join(vaultPath, entry.name);
-                    if (await this.isGitRepository(subPath)) {
-                        repositories.push({
-                            name: `Vault/${entry.name}`,
-                            path: subPath,
-                            isParent: false
-                        });
+        // Skip if Vault itself is a Git repository
+        const vaultIsGit = await this.isGitRepository(vaultPath);
+        if (!vaultIsGit) {
+            try {
+                const entries = await fs.readdir(vaultPath, { withFileTypes: true });
+                for (const entry of entries) {
+                    if (entry.isDirectory() && !entry.name.startsWith('.')) {
+                        const subPath = path.join(vaultPath, entry.name);
+                        if (await this.isGitRepository(subPath)) {
+                            repositories.push({
+                                name: `Vault/${entry.name}`,
+                                path: subPath,
+                                isParent: false
+                            });
+                        }
                     }
                 }
+            } catch (error) {
+                console.error('Error scanning subdirectories:', error);
             }
-        } catch (error) {
-            console.error('Error scanning subdirectories:', error);
         }
         
         // Detect Parent repository
