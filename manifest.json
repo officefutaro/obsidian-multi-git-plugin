@@ -1,7 +1,7 @@
 {
   "id": "obsidian-multi-git-plugin",
   "name": "Obsidian Multi-Git Plugin",
-  "version": "0.9.6",
+  "version": "1.0.0",
   "minAppVersion": "0.15.0",
   "description": "Manage multiple Git repositories within Obsidian - 複数のGitリポジトリを管理",
   "author": "officefutaro",

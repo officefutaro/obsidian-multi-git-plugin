@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.6');
+        console.log('Loading Obsidian Multi-Git Plugin v1.0.0');
         
         await this.loadSettings();
         
@@ -58,9 +58,21 @@ class MultiGitPlugin extends Plugin {
         const repositories = [];
         const fs = require('fs').promises;
         
-        // Detect Vault repository
         const vaultPath = this.app.vault.adapter.basePath;
-        if (await this.isGitRepository(vaultPath)) {
+        const parentPath = path.dirname(vaultPath);
+        
+        // 1. Check Parent Directory first
+        if (await this.isGitRepository(parentPath)) {
+            repositories.push({
+                name: 'Parent (Claude Code)',
+                path: parentPath,
+                isParent: true
+            });
+        }
+        
+        // 2. Check Vault Directory
+        const vaultIsGit = await this.isGitRepository(vaultPath);
+        if (vaultIsGit) {
             repositories.push({
                 name: 'Vault',
                 path: vaultPath,
@@ -68,15 +80,17 @@ class MultiGitPlugin extends Plugin {
             });
         }
         
-        // Detect subdirectories in Vault (like Novels)
-        // Skip if Vault itself is a Git repository
-        const vaultIsGit = await this.isGitRepository(vaultPath);
+        // 3. Check subdirectories ONLY if Vault is NOT a Git repository
         if (!vaultIsGit) {
             try {
                 const entries = await fs.readdir(vaultPath, { withFileTypes: true });
+                
                 for (const entry of entries) {
+                    // Skip hidden directories (starting with .)
                     if (entry.isDirectory() && !entry.name.startsWith('.')) {
                         const subPath = path.join(vaultPath, entry.name);
+                        
+                        // Check if this subdirectory is a Git repository
                         if (await this.isGitRepository(subPath)) {
                             repositories.push({
                                 name: `Vault/${entry.name}`,
@@ -89,16 +103,39 @@ class MultiGitPlugin extends Plugin {
             } catch (error) {
                 console.error('Error scanning subdirectories:', error);
             }
-        }
-        
-        // Detect Parent repository
-        const parentPath = path.dirname(vaultPath);
-        if (await this.isGitRepository(parentPath)) {
-            repositories.push({
-                name: 'Parent (Claude Code)',
-                path: parentPath,
-                isParent: true
-            });
+        } else {
+            // Special case: Check for specific known subdirectories that might be separate repos
+            // This handles cases like Ayumu/Novels where Novels is a separate repo
+            const knownSubRepos = ['Novels', 'Projects', 'Plugins'];
+            
+            try {
+                for (const subName of knownSubRepos) {
+                    const subPath = path.join(vaultPath, subName);
+                    
+                    // Check if directory exists and is a Git repository
+                    try {
+                        const stat = await fs.stat(subPath);
+                        if (stat.isDirectory() && await this.isGitRepository(subPath)) {
+                            // Only add if it has its own .git directory
+                            const gitPath = path.join(subPath, '.git');
+                            try {
+                                await fs.stat(gitPath);
+                                repositories.push({
+                                    name: `Vault/${subName}`,
+                                    path: subPath,
+                                    isParent: false
+                                });
+                            } catch (e) {
+                                // .git doesn't exist, skip
+                            }
+                        }
+                    } catch (e) {
+                        // Directory doesn't exist, skip
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking known subdirectories:', error);
+            }
         }
         
         return repositories;
@@ -234,7 +271,7 @@ class GitRepositoryManagerModal extends Modal {
         super(app);
         this.plugin = plugin;
         this.repositories = [];
-        // Add custom class to modal
+        // Add custom class to modal for styling
         this.modalEl.addClass('git-repository-manager-modal');
     }
     
@@ -293,6 +330,14 @@ class GitRepositoryManagerModal extends Modal {
             const status = await this.plugin.getGitStatus(repo.path);
             this.renderRepository(repo, status);
         }
+        
+        // If no repositories found, show message
+        if (this.repositories.length === 0) {
+            this.repoContainer.createEl('p', { 
+                text: 'No Git repositories detected.',
+                cls: 'git-no-repos-message'
+            });
+        }
     }
     
     renderRepository(repo, status) {
@@ -302,9 +347,13 @@ class GitRepositoryManagerModal extends Modal {
         const headerEl = repoEl.createEl('div', { cls: 'git-repo-header' });
         headerEl.createEl('h3', { text: repo.name, cls: 'git-repo-name' });
         
-        // Full path display - scrollable if too long
-        const pathEl = headerEl.createEl('div', { cls: 'git-repo-path-container' });
-        pathEl.createEl('div', { text: repo.path, cls: 'git-repo-path', attr: { title: repo.path } });
+        // Full path display with horizontal scroll
+        const pathContainer = headerEl.createEl('div', { cls: 'git-repo-path-container' });
+        const pathEl = pathContainer.createEl('div', { 
+            text: repo.path, 
+            cls: 'git-repo-path',
+            attr: { title: repo.path } 
+        });
         
         // Branch info
         const branchEl = repoEl.createEl('div', { cls: 'git-branch-info' });
