@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.3');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.4');
         
         await this.loadSettings();
         
@@ -56,6 +56,7 @@ class MultiGitPlugin extends Plugin {
     
     async detectRepositories() {
         const repositories = [];
+        const fs = require('fs').promises;
         
         // Detect Vault repository
         const vaultPath = this.app.vault.adapter.basePath;
@@ -65,6 +66,25 @@ class MultiGitPlugin extends Plugin {
                 path: vaultPath,
                 isParent: false
             });
+        }
+        
+        // Detect subdirectories in Vault (like Novels)
+        try {
+            const entries = await fs.readdir(vaultPath, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const subPath = path.join(vaultPath, entry.name);
+                    if (await this.isGitRepository(subPath)) {
+                        repositories.push({
+                            name: `Vault/${entry.name}`,
+                            path: subPath,
+                            isParent: false
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error scanning subdirectories:', error);
         }
         
         // Detect Parent repository
