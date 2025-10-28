@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.8');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.9');
         
         await this.loadSettings();
         
@@ -199,6 +199,52 @@ class MultiGitPlugin extends Plugin {
                 }
             });
         });
+    }
+    
+    async getChangedFiles(repoPath) {
+        try {
+            const [statusOutput, diffNameOutput, diffStatOutput] = await Promise.all([
+                this.executeGitCommand(repoPath, 'git status --porcelain'),
+                this.executeGitCommand(repoPath, 'git diff --name-status').catch(() => ''),
+                this.executeGitCommand(repoPath, 'git diff --stat').catch(() => '')
+            ]);
+            
+            const changedFiles = [];
+            const statusLines = statusOutput.trim().split('\n').filter(line => line);
+            
+            for (const line of statusLines) {
+                if (line.length < 3) continue;
+                
+                const status = line.substring(0, 2).trim();
+                const filePath = line.substring(3);
+                
+                let changeType = 'Modified';
+                if (status.includes('A')) changeType = 'Added';
+                else if (status.includes('D')) changeType = 'Deleted';
+                else if (status.includes('M')) changeType = 'Modified';
+                else if (status === '??') changeType = 'Untracked';
+                else if (status.includes('R')) changeType = 'Renamed';
+                
+                changedFiles.push({
+                    path: filePath,
+                    status: status,
+                    changeType: changeType
+                });
+            }
+            
+            return {
+                files: changedFiles,
+                summary: diffStatOutput.trim(),
+                totalFiles: changedFiles.length
+            };
+        } catch (error) {
+            return {
+                files: [],
+                summary: 'Error getting file changes',
+                totalFiles: 0,
+                error: error.message
+            };
+        }
     }
     
     async commitRepository(repoPath, message) {
@@ -417,6 +463,12 @@ class GitRepositoryManagerModal extends Modal {
             cls: 'git-repo-button'
         });
         pullBtn.onclick = () => this.pullRepository(repo);
+        
+        const viewBtn = actionsEl.createEl('button', { 
+            text: '👁️ View',
+            cls: 'git-repo-button'
+        });
+        viewBtn.onclick = () => this.viewChanges(repo);
     }
     
     async commitRepository(repo) {
@@ -448,6 +500,11 @@ class GitRepositoryManagerModal extends Modal {
         } catch (error) {
             // Error already handled in plugin
         }
+    }
+    
+    async viewChanges(repo) {
+        const modal = new ChangedFilesModal(this.app, this.plugin, repo);
+        modal.open();
     }
     
     async commitAll() {
@@ -540,6 +597,129 @@ class MultiGitSettingTab extends PluginSettingTab {
                         this.plugin.startAutoRefresh();
                     }
                 }));
+    }
+}
+
+class ChangedFilesModal extends Modal {
+    constructor(app, plugin, repo) {
+        super(app);
+        this.plugin = plugin;
+        this.repo = repo;
+    }
+    
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        
+        contentEl.createEl('h2', { text: `Changed Files - ${this.repo.name}` });
+        
+        // Loading indicator
+        const loadingEl = contentEl.createEl('div', { 
+            text: 'Loading changes...', 
+            cls: 'git-loading' 
+        });
+        
+        try {
+            const changes = await this.plugin.getChangedFiles(this.repo.path);
+            loadingEl.remove();
+            
+            if (changes.error) {
+                contentEl.createEl('div', { 
+                    text: `Error: ${changes.error}`, 
+                    cls: 'git-error' 
+                });
+                return;
+            }
+            
+            if (changes.totalFiles === 0) {
+                contentEl.createEl('div', { 
+                    text: '✅ No changes detected', 
+                    cls: 'git-no-changes' 
+                });
+                return;
+            }
+            
+            // Summary section
+            const summaryEl = contentEl.createEl('div', { cls: 'git-changes-summary' });
+            summaryEl.createEl('h3', { text: `Summary (${changes.totalFiles} files)` });
+            
+            if (changes.summary) {
+                const summaryPre = summaryEl.createEl('pre', { 
+                    text: changes.summary,
+                    cls: 'git-summary-text'
+                });
+                summaryPre.style.background = 'var(--background-secondary)';
+                summaryPre.style.padding = '8px';
+                summaryPre.style.borderRadius = '4px';
+                summaryPre.style.fontSize = '12px';
+            }
+            
+            // Files list section
+            const filesEl = contentEl.createEl('div', { cls: 'git-files-list' });
+            filesEl.createEl('h3', { text: 'Changed Files' });
+            
+            for (const file of changes.files) {
+                const fileEl = filesEl.createEl('div', { cls: 'git-file-item' });
+                
+                // Status icon
+                let statusIcon = '📝';
+                let statusClass = 'git-modified';
+                
+                switch (file.changeType) {
+                    case 'Added':
+                        statusIcon = '➕';
+                        statusClass = 'git-added';
+                        break;
+                    case 'Deleted':
+                        statusIcon = '🗑️';
+                        statusClass = 'git-deleted';
+                        break;
+                    case 'Untracked':
+                        statusIcon = '❓';
+                        statusClass = 'git-untracked';
+                        break;
+                    case 'Renamed':
+                        statusIcon = '🔄';
+                        statusClass = 'git-renamed';
+                        break;
+                }
+                
+                const statusEl = fileEl.createEl('span', { 
+                    text: statusIcon, 
+                    cls: `git-file-status ${statusClass}` 
+                });
+                
+                const pathEl = fileEl.createEl('span', { 
+                    text: file.path, 
+                    cls: 'git-file-path' 
+                });
+                
+                const typeEl = fileEl.createEl('span', { 
+                    text: file.changeType, 
+                    cls: `git-change-type ${statusClass}` 
+                });
+            }
+            
+        } catch (error) {
+            loadingEl.remove();
+            contentEl.createEl('div', { 
+                text: `Error loading changes: ${error.message}`, 
+                cls: 'git-error' 
+            });
+        }
+        
+        // Close button
+        const buttonContainer = contentEl.createEl('div', { cls: 'git-modal-buttons' });
+        const closeButton = buttonContainer.createEl('button', { 
+            text: 'Close', 
+            cls: 'git-close-button' 
+        });
+        closeButton.onclick = () => this.close();
+    }
+    
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
     }
 }
 

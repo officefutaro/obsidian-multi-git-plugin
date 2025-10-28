@@ -284,6 +284,133 @@
     background-color: var(--interactive-accent-hover);
 }
 
+/* Changed Files Modal */
+.git-changes-summary {
+    margin: 16px 0;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background-color: var(--background-secondary);
+}
+
+.git-changes-summary h3 {
+    margin: 0 0 8px 0;
+    color: var(--text-accent);
+}
+
+.git-summary-text {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: var(--font-monospace);
+}
+
+.git-files-list {
+    margin: 16px 0;
+}
+
+.git-files-list h3 {
+    margin: 0 0 12px 0;
+    color: var(--text-accent);
+}
+
+.git-file-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    background-color: var(--background-primary-alt);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.git-file-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.git-file-status {
+    width: 24px;
+    text-align: center;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.git-file-path {
+    flex: 1;
+    font-family: var(--font-monospace);
+    font-size: 13px;
+    margin-right: 8px;
+    word-break: break-all;
+}
+
+.git-change-type {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.git-change-type.git-added {
+    background-color: var(--color-green);
+    color: white;
+}
+
+.git-change-type.git-deleted {
+    background-color: var(--color-red);
+    color: white;
+}
+
+.git-change-type.git-modified {
+    background-color: var(--color-orange);
+    color: white;
+}
+
+.git-change-type.git-untracked {
+    background-color: var(--color-blue);
+    color: white;
+}
+
+.git-change-type.git-renamed {
+    background-color: var(--color-purple);
+    color: white;
+}
+
+.git-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.git-no-changes {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.git-error {
+    padding: 12px;
+    background-color: var(--background-modifier-error);
+    border: 1px solid var(--color-red);
+    border-radius: 4px;
+    color: var(--color-red);
+    margin: 12px 0;
+}
+
+.git-close-button {
+    padding: 8px 16px;
+    background-color: var(--interactive-normal);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.git-close-button:hover {
+    background-color: var(--interactive-hover);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .git-action-container {
