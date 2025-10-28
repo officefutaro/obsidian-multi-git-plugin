@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v1.0.0');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.7');
         
         await this.loadSettings();
         
