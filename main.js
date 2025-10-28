@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS = {
 
 class MultiGitPlugin extends Plugin {
     async onload() {
-        console.log('Loading Obsidian Multi-Git Plugin v0.9.7');
+        console.log('Loading Obsidian Multi-Git Plugin v0.9.8');
         
         await this.loadSettings();
         
@@ -420,15 +420,16 @@ class GitRepositoryManagerModal extends Modal {
     }
     
     async commitRepository(repo) {
-        const message = prompt('Enter commit message:', 'Auto commit from Obsidian');
-        if (message) {
-            try {
-                await this.plugin.commitRepository(repo.path, message);
-                await this.refreshRepositories();
-            } catch (error) {
-                // Error already handled in plugin
+        const modal = new CommitMessageModal(this.app, (message) => {
+            if (message) {
+                this.plugin.commitRepository(repo.path, message)
+                    .then(() => this.refreshRepositories())
+                    .catch(() => {
+                        // Error already handled in plugin
+                    });
             }
-        }
+        });
+        modal.open();
     }
     
     async pushRepository(repo) {
@@ -450,17 +451,19 @@ class GitRepositoryManagerModal extends Modal {
     }
     
     async commitAll() {
-        const message = prompt('Enter commit message for all repositories:', 'Auto commit from Obsidian');
-        if (message) {
-            for (const repo of this.repositories) {
-                try {
-                    await this.plugin.commitRepository(repo.path, message);
-                } catch (error) {
-                    // Continue with next repository
+        const modal = new CommitMessageModal(this.app, async (message) => {
+            if (message) {
+                for (const repo of this.repositories) {
+                    try {
+                        await this.plugin.commitRepository(repo.path, message);
+                    } catch (error) {
+                        // Continue with next repository
+                    }
                 }
+                await this.refreshRepositories();
             }
-            await this.refreshRepositories();
-        }
+        });
+        modal.open();
     }
     
     async pushAll() {
@@ -537,6 +540,79 @@ class MultiGitSettingTab extends PluginSettingTab {
                         this.plugin.startAutoRefresh();
                     }
                 }));
+    }
+}
+
+class CommitMessageModal extends Modal {
+    constructor(app, onSubmit) {
+        super(app);
+        this.onSubmit = onSubmit;
+    }
+    
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        
+        contentEl.createEl('h2', { text: 'Git Commit Message' });
+        
+        const inputContainer = contentEl.createEl('div', { cls: 'git-commit-input-container' });
+        this.messageInput = inputContainer.createEl('textarea', {
+            cls: 'git-commit-message-input',
+            attr: {
+                placeholder: 'Enter commit message...',
+                rows: '4'
+            }
+        });
+        this.messageInput.style.width = '100%';
+        this.messageInput.style.marginBottom = '16px';
+        
+        const buttonContainer = contentEl.createEl('div', { cls: 'git-commit-buttons' });
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '8px';
+        buttonContainer.style.justifyContent = 'flex-end';
+        
+        const commitButton = buttonContainer.createEl('button', {
+            text: 'Commit',
+            cls: 'mod-cta'
+        });
+        commitButton.onclick = () => {
+            const message = this.messageInput.value.trim();
+            if (message) {
+                this.close();
+                this.onSubmit(message);
+            } else {
+                new Notice('Please enter a commit message');
+            }
+        };
+        
+        const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
+        cancelButton.onclick = () => {
+            this.close();
+        };
+        
+        // Handle Enter key (Ctrl+Enter to submit)
+        this.messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                const message = this.messageInput.value.trim();
+                if (message) {
+                    this.close();
+                    this.onSubmit(message);
+                } else {
+                    new Notice('Please enter a commit message');
+                }
+            }
+        });
+        
+        // Focus on input and select default text if any
+        setTimeout(() => {
+            this.messageInput.focus();
+        }, 100);
+    }
+    
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
     }
 }
 

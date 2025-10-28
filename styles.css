@@ -238,6 +238,52 @@
     overflow-y: auto;
 }
 
+/* Commit Message Modal */
+.git-commit-input-container {
+    margin: 16px 0;
+}
+
+.git-commit-message-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    resize: vertical;
+    font-family: var(--font-text);
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.git-commit-message-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+.git-commit-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.git-commit-buttons button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.git-commit-buttons .mod-cta {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.git-commit-buttons .mod-cta:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .git-action-container {
