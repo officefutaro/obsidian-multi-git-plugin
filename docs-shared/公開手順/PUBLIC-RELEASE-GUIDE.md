@@ -1,3 +1,7 @@
+---
+created: 2025-10-27T13:26
+updated: 2025-10-27T13:26
+---
 # Obsidian Multi Git Plugin 公開手順ガイド
 
 **更新日**: 2025年10月26日  
