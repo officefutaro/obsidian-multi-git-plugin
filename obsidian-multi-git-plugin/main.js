@@ -735,7 +735,7 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
   }
   onload() {
     return __async(this, null, function* () {
-      this.log("info", "Loading Multi Git Manager plugin v1.1.2.1");
+      this.log("info", "Loading Multi Git Manager plugin v1.1.2.2");
       yield this.loadSettings();
       this.log("debug", "Settings loaded:", this.automodeSettings);
       this.automodeManager = new AutomodeManager(this);
@@ -1153,9 +1153,18 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
     this.plugin = plugin;
   }
   display() {
+    var _a, _b;
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Multi Git Manager Settings" });
+    const debugInfo = containerEl.createEl("div", {
+      cls: "setting-item-info",
+      attr: { style: "margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;" }
+    });
+    debugInfo.createEl("div", { text: `Plugin Version: v1.1.2.2` });
+    debugInfo.createEl("div", { text: `Settings loaded: ${this.plugin.automodeSettings ? "Yes" : "No"}` });
+    debugInfo.createEl("div", { text: `Debug mode: ${(_a = this.plugin.automodeSettings) == null ? void 0 : _a.debugMode}` });
+    debugInfo.createEl("div", { text: `File logging: ${(_b = this.plugin.automodeSettings) == null ? void 0 : _b.enableFileLogging}` });
     containerEl.createEl("h3", { text: "Automode Settings" });
     new import_obsidian3.Setting(containerEl).setName("Enable Automode").setDesc("Automatically commit and push changes at regular intervals").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enabled).onChange((value) => __async(this, null, function* () {
       this.plugin.automodeSettings.enabled = value;
@@ -1194,23 +1203,31 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
       this.plugin.automodeSettings.autoSwitchToMain = value;
       yield this.plugin.saveSettings();
     })));
-    containerEl.createEl("h3", { text: "Debug Settings" });
-    new import_obsidian3.Setting(containerEl).setName("Debug Mode").setDesc("Show debug messages as notifications (for troubleshooting)").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.debugMode).onChange((value) => __async(this, null, function* () {
-      this.plugin.automodeSettings.debugMode = value;
-      yield this.plugin.saveSettings();
-    })));
-    new import_obsidian3.Setting(containerEl).setName("Log Level").setDesc("Console logging level (check Developer Console: Ctrl+Shift+I)").addDropdown((dropdown) => dropdown.addOption("error", "Error only").addOption("warn", "Warning and above").addOption("info", "Info and above").addOption("debug", "All messages").setValue(this.plugin.automodeSettings.logLevel).onChange((value) => __async(this, null, function* () {
-      this.plugin.automodeSettings.logLevel = value;
-      yield this.plugin.saveSettings();
-    })));
-    new import_obsidian3.Setting(containerEl).setName("Enable File Logging").setDesc("Save logs to a file in your vault directory").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enableFileLogging).onChange((value) => __async(this, null, function* () {
-      this.plugin.automodeSettings.enableFileLogging = value;
-      yield this.plugin.saveSettings();
-    })));
-    new import_obsidian3.Setting(containerEl).setName("Log File Path").setDesc("Path to log file (relative to vault directory)").addText((text) => text.setPlaceholder("multi-git-debug.log").setValue(this.plugin.automodeSettings.logFilePath).onChange((value) => __async(this, null, function* () {
-      this.plugin.automodeSettings.logFilePath = value || "multi-git-debug.log";
-      yield this.plugin.saveSettings();
-    })));
+    try {
+      containerEl.createEl("h3", { text: "Debug Settings" });
+      new import_obsidian3.Setting(containerEl).setName("Debug Mode").setDesc("Show debug messages as notifications (for troubleshooting)").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.debugMode || false).onChange((value) => __async(this, null, function* () {
+        this.plugin.automodeSettings.debugMode = value;
+        yield this.plugin.saveSettings();
+      })));
+      new import_obsidian3.Setting(containerEl).setName("Log Level").setDesc("Console logging level (check Developer Console: Ctrl+Shift+I)").addDropdown((dropdown) => dropdown.addOption("error", "Error only").addOption("warn", "Warning and above").addOption("info", "Info and above").addOption("debug", "All messages").setValue(this.plugin.automodeSettings.logLevel || "info").onChange((value) => __async(this, null, function* () {
+        this.plugin.automodeSettings.logLevel = value;
+        yield this.plugin.saveSettings();
+      })));
+      new import_obsidian3.Setting(containerEl).setName("Enable File Logging").setDesc("Save logs to a file in your vault directory").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enableFileLogging || false).onChange((value) => __async(this, null, function* () {
+        this.plugin.automodeSettings.enableFileLogging = value;
+        yield this.plugin.saveSettings();
+      })));
+      new import_obsidian3.Setting(containerEl).setName("Log File Path").setDesc("Path to log file (relative to vault directory)").addText((text) => text.setPlaceholder("multi-git-debug.log").setValue(this.plugin.automodeSettings.logFilePath || "multi-git-debug.log").onChange((value) => __async(this, null, function* () {
+        this.plugin.automodeSettings.logFilePath = value || "multi-git-debug.log";
+        yield this.plugin.saveSettings();
+      })));
+    } catch (error) {
+      containerEl.createEl("div", {
+        text: `Error rendering debug settings: ${error}`,
+        attr: { style: "color: red; margin: 10px; padding: 10px; background: var(--background-modifier-error);" }
+      });
+      console.error("[Multi-Git] Settings rendering error:", error);
+    }
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

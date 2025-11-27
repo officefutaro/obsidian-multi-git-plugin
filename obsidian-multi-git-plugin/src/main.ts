@@ -110,7 +110,7 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async onload() {
-        this.log('info', 'Loading Multi Git Manager plugin v1.1.2.1');
+        this.log('info', 'Loading Multi Git Manager plugin v1.1.2.2');
 
         // Load settings
         await this.loadSettings();
@@ -610,6 +610,16 @@ class MultiGitSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         containerEl.createEl('h2', { text: 'Multi Git Manager Settings' });
+        
+        // Debug info at top
+        const debugInfo = containerEl.createEl('div', { 
+            cls: 'setting-item-info',
+            attr: { style: 'margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;' }
+        });
+        debugInfo.createEl('div', { text: `Plugin Version: v1.1.2.2` });
+        debugInfo.createEl('div', { text: `Settings loaded: ${this.plugin.automodeSettings ? 'Yes' : 'No'}` });
+        debugInfo.createEl('div', { text: `Debug mode: ${this.plugin.automodeSettings?.debugMode}` });
+        debugInfo.createEl('div', { text: `File logging: ${this.plugin.automodeSettings?.enableFileLogging}` });
 
         // Automode section
         containerEl.createEl('h3', { text: 'Automode Settings' });
@@ -704,51 +714,59 @@ class MultiGitSettingTab extends PluginSettingTab {
                 }));
 
         // Debug section
-        containerEl.createEl('h3', { text: 'Debug Settings' });
+        try {
+            containerEl.createEl('h3', { text: 'Debug Settings' });
 
-        new Setting(containerEl)
-            .setName('Debug Mode')
-            .setDesc('Show debug messages as notifications (for troubleshooting)')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.automodeSettings.debugMode)
-                .onChange(async (value) => {
-                    this.plugin.automodeSettings.debugMode = value;
-                    await this.plugin.saveSettings();
-                }));
+            new Setting(containerEl)
+                .setName('Debug Mode')
+                .setDesc('Show debug messages as notifications (for troubleshooting)')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.automodeSettings.debugMode || false)
+                    .onChange(async (value) => {
+                        this.plugin.automodeSettings.debugMode = value;
+                        await this.plugin.saveSettings();
+                    }));
 
-        new Setting(containerEl)
-            .setName('Log Level')
-            .setDesc('Console logging level (check Developer Console: Ctrl+Shift+I)')
-            .addDropdown(dropdown => dropdown
-                .addOption('error', 'Error only')
-                .addOption('warn', 'Warning and above')
-                .addOption('info', 'Info and above')
-                .addOption('debug', 'All messages')
-                .setValue(this.plugin.automodeSettings.logLevel)
-                .onChange(async (value: 'error' | 'warn' | 'info' | 'debug') => {
-                    this.plugin.automodeSettings.logLevel = value;
-                    await this.plugin.saveSettings();
-                }));
+            new Setting(containerEl)
+                .setName('Log Level')
+                .setDesc('Console logging level (check Developer Console: Ctrl+Shift+I)')
+                .addDropdown(dropdown => dropdown
+                    .addOption('error', 'Error only')
+                    .addOption('warn', 'Warning and above')
+                    .addOption('info', 'Info and above')
+                    .addOption('debug', 'All messages')
+                    .setValue(this.plugin.automodeSettings.logLevel || 'info')
+                    .onChange(async (value: 'error' | 'warn' | 'info' | 'debug') => {
+                        this.plugin.automodeSettings.logLevel = value;
+                        await this.plugin.saveSettings();
+                    }));
 
-        new Setting(containerEl)
-            .setName('Enable File Logging')
-            .setDesc('Save logs to a file in your vault directory')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.automodeSettings.enableFileLogging)
-                .onChange(async (value) => {
-                    this.plugin.automodeSettings.enableFileLogging = value;
-                    await this.plugin.saveSettings();
-                }));
+            new Setting(containerEl)
+                .setName('Enable File Logging')
+                .setDesc('Save logs to a file in your vault directory')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.automodeSettings.enableFileLogging || false)
+                    .onChange(async (value) => {
+                        this.plugin.automodeSettings.enableFileLogging = value;
+                        await this.plugin.saveSettings();
+                    }));
 
-        new Setting(containerEl)
-            .setName('Log File Path')
-            .setDesc('Path to log file (relative to vault directory)')
-            .addText(text => text
-                .setPlaceholder('multi-git-debug.log')
-                .setValue(this.plugin.automodeSettings.logFilePath)
-                .onChange(async (value) => {
-                    this.plugin.automodeSettings.logFilePath = value || 'multi-git-debug.log';
-                    await this.plugin.saveSettings();
-                }));
+            new Setting(containerEl)
+                .setName('Log File Path')
+                .setDesc('Path to log file (relative to vault directory)')
+                .addText(text => text
+                    .setPlaceholder('multi-git-debug.log')
+                    .setValue(this.plugin.automodeSettings.logFilePath || 'multi-git-debug.log')
+                    .onChange(async (value) => {
+                        this.plugin.automodeSettings.logFilePath = value || 'multi-git-debug.log';
+                        await this.plugin.saveSettings();
+                    }));
+        } catch (error) {
+            containerEl.createEl('div', { 
+                text: `Error rendering debug settings: ${error}`,
+                attr: { style: 'color: red; margin: 10px; padding: 10px; background: var(--background-modifier-error);' }
+            });
+            console.error('[Multi-Git] Settings rendering error:', error);
+        }
     }
 }
