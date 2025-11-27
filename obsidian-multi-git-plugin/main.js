@@ -71,6 +71,7 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian3 = require("obsidian");
 var import_child_process = require("child_process");
 var path = __toESM(require("path"));
+var fs = __toESM(require("fs"));
 var import_util = require("util");
 
 // src/git-manager-view.ts
@@ -445,7 +446,7 @@ var AutomodeManager = class {
     if (this.plugin.automodeSettings.showNotifications) {
       new import_obsidian2.Notice(`\u{1F916} Automode started (${this.plugin.automodeSettings.interval}s interval)`);
     }
-    console.log("Automode started with interval:", this.plugin.automodeSettings.interval, "seconds");
+    this.plugin.log("info", `Automode started with ${this.plugin.automodeSettings.interval}s interval`);
   }
   stopAutomode() {
     if (this.automodeTimer) {
@@ -457,7 +458,7 @@ var AutomodeManager = class {
     if (this.plugin.automodeSettings.showNotifications) {
       new import_obsidian2.Notice("\u23F8\uFE0F Automode stopped");
     }
-    console.log("Automode stopped");
+    this.plugin.log("info", "Automode stopped");
   }
   toggleAutomode() {
     this.plugin.automodeSettings.enabled = !this.plugin.automodeSettings.enabled;
@@ -483,28 +484,33 @@ var AutomodeManager = class {
   executeAutomodeCheck() {
     return __async(this, null, function* () {
       if (this.isRunning) {
-        console.log("Automode check skipped - already running");
+        this.plugin.log("debug", "Automode check skipped - already running");
         return;
       }
       this.isRunning = true;
       this.updateStatusBar();
+      this.plugin.log("debug", "Starting automode check...");
       try {
         let processedCount = 0;
         for (const repo of this.plugin.repositories) {
           if (this.plugin.automodeSettings.excludeRepositories.includes(repo.path)) {
+            this.plugin.log("debug", `Skipping excluded repository: ${repo.name}`);
             continue;
           }
+          this.plugin.log("debug", `Checking repository: ${repo.name} at ${repo.path}`);
           const hasChanges = yield this.detectChanges(repo);
           if (hasChanges) {
+            this.plugin.log("info", `Auto-committing changes in ${repo.name}`);
             yield this.executeAutoCommit(repo);
             processedCount++;
           }
         }
+        this.plugin.log("info", `Automode check completed: ${processedCount} repositories processed`);
         if (processedCount > 0 && this.plugin.automodeSettings.showNotifications) {
           new import_obsidian2.Notice(`\u2705 Auto-committed changes in ${processedCount} repositories`);
         }
       } catch (error) {
-        console.error("Automode execution error:", error);
+        this.plugin.log("error", "Automode execution error:", error);
         if (this.plugin.automodeSettings.showNotifications) {
           new import_obsidian2.Notice(`\u274C Automode error: ${error.message}`);
         }
@@ -521,7 +527,7 @@ var AutomodeManager = class {
         const status = yield this.plugin.getGitStatus(repo.path);
         return status.modified.length > 0 || status.added.length > 0 || status.deleted.length > 0 || status.untracked.length > 0;
       } catch (error) {
-        console.error(`Failed to detect changes in ${repo.path}:`, error);
+        this.plugin.log("error", `Failed to detect changes in ${repo.path}:`, error);
         return false;
       }
     });
@@ -539,9 +545,9 @@ var AutomodeManager = class {
           const pushBranch = this.plugin.automodeSettings.useSeparateBranch ? this.plugin.automodeSettings.automodeBranchName : yield this.getCurrentBranch(repo.path);
           yield this.plugin.executeGitCommand(repo.path, `push origin ${pushBranch}`);
         }
-        console.log(`Auto-committed changes in ${repo.name}: ${message}`);
+        this.plugin.log("info", `Auto-committed changes in ${repo.name}: ${message}`);
       } catch (error) {
-        console.error(`Failed to auto-commit in ${repo.path}:`, error);
+        this.plugin.log("error", `Failed to auto-commit in ${repo.path}:`, error);
         if (error.message.includes("CONFLICT")) {
           if (this.plugin.automodeSettings.showNotifications) {
             new import_obsidian2.Notice(`\u{1F6D1} Automode stopped due to conflict in ${repo.name}`);
@@ -680,7 +686,11 @@ var DEFAULT_AUTOMODE_SETTINGS = {
   excludeRepositories: [],
   useSeparateBranch: true,
   automodeBranchName: "automode",
-  autoSwitchToMain: true
+  autoSwitchToMain: true,
+  debugMode: false,
+  logLevel: "info",
+  enableFileLogging: false,
+  logFilePath: "multi-git-debug.log"
 };
 var MultiGitPlugin = class extends import_obsidian3.Plugin {
   constructor() {
@@ -688,11 +698,48 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
     this.repositories = [];
     this.automodeSettings = __spreadValues({}, DEFAULT_AUTOMODE_SETTINGS);
   }
+  // Logger utility
+  log(level, message, ...args) {
+    const logLevels = { error: 0, warn: 1, info: 2, debug: 3 };
+    const currentLevel = logLevels[this.automodeSettings.logLevel];
+    const messageLevel = logLevels[level];
+    if (messageLevel <= currentLevel) {
+      const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+      const prefix = `[Multi-Git ${level.toUpperCase()}]`;
+      const fullMessage = `${prefix} ${message}`;
+      const argsStr = args.length > 0 ? " " + args.map(
+        (arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+      ).join(" ") : "";
+      console[level === "debug" ? "log" : level](fullMessage, ...args);
+      if (this.automodeSettings.enableFileLogging) {
+        this.writeToLogFile(`${timestamp} ${fullMessage}${argsStr}`);
+      }
+      if (this.automodeSettings.showNotifications && (level === "error" || level === "warn")) {
+        new import_obsidian3.Notice(`${prefix} ${message}`);
+      }
+      if (this.automodeSettings.debugMode && level === "debug") {
+        new import_obsidian3.Notice(`${prefix} ${message}`);
+      }
+    }
+  }
+  writeToLogFile(logEntry) {
+    return __async(this, null, function* () {
+      try {
+        const vaultPath = this.app.vault.adapter.basePath;
+        const logPath = path.join(vaultPath, this.automodeSettings.logFilePath);
+        fs.appendFileSync(logPath, logEntry + "\n", "utf8");
+      } catch (error) {
+        console.error("[Multi-Git] Failed to write to log file:", error);
+      }
+    });
+  }
   onload() {
     return __async(this, null, function* () {
-      console.log("Loading Multi Git Manager plugin");
+      this.log("info", "Loading Multi Git Manager plugin v1.1.2.1");
       yield this.loadSettings();
+      this.log("debug", "Settings loaded:", this.automodeSettings);
       this.automodeManager = new AutomodeManager(this);
+      this.log("debug", "Automode manager initialized");
       this.registerView(
         GIT_MANAGER_VIEW_TYPE,
         (leaf) => new GitManagerView(leaf, this)
@@ -702,7 +749,10 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
       this.statusBarItem.setText("Git: Initializing...");
       yield this.detectRepositories();
       if (this.automodeSettings.enabled) {
+        this.log("info", "Starting automode on plugin load");
         this.automodeManager.startAutomode();
+      } else {
+        this.log("debug", "Automode disabled in settings");
       }
       this.addCommand({
         id: "show-git-status",
@@ -746,11 +796,27 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
         window.setInterval(() => this.updateStatusBar(), 3e4)
       );
       yield this.updateStatusBar();
+      this.log("info", "Multi Git Manager plugin loaded successfully");
     });
   }
   loadSettings() {
     return __async(this, null, function* () {
-      this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, yield this.loadData());
+      const loadedData = yield this.loadData();
+      this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, loadedData);
+      if (this.automodeSettings.enableFileLogging === void 0) {
+        this.automodeSettings.enableFileLogging = false;
+      }
+      if (!this.automodeSettings.logFilePath) {
+        this.automodeSettings.logFilePath = "multi-git-debug.log";
+      }
+      if (this.automodeSettings.debugMode === void 0) {
+        this.automodeSettings.debugMode = false;
+      }
+      if (!this.automodeSettings.logLevel) {
+        this.automodeSettings.logLevel = "info";
+      }
+      this.log("debug", "Settings migration completed, current settings:", this.automodeSettings);
+      yield this.saveSettings();
     });
   }
   saveSettings() {
@@ -771,14 +837,19 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
   }
   detectRepositories() {
     return __async(this, null, function* () {
+      this.log("debug", "Starting repository detection...");
       this.repositories = [];
       const vaultPath = this.app.vault.adapter.basePath;
+      this.log("debug", "Vault path:", vaultPath);
       const checkGitRepo = (dirPath, name, isParent = false) => __async(this, null, function* () {
         try {
+          this.log("debug", `Checking Git repository: ${dirPath}`);
           yield execAsync("git status", { cwd: dirPath });
           this.repositories.push({ path: dirPath, name, isParent });
+          this.log("info", `Found Git repository: ${name} at ${dirPath}`);
           return true;
-        } catch (e) {
+        } catch (error) {
+          this.log("debug", `Not a Git repository: ${dirPath}`, error);
           return false;
         }
       });
@@ -790,7 +861,11 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
         const fullPath = path.join(vaultPath, folder);
         yield checkGitRepo(fullPath, folder, false);
       }
-      console.log(`Detected ${this.repositories.length} Git repositories`);
+      this.log(
+        "info",
+        `Detected ${this.repositories.length} Git repositories:`,
+        this.repositories.map((r) => `${r.name} (${r.path})`)
+      );
     });
   }
   getGitStatus(repoPath) {
@@ -828,7 +903,7 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
         } catch (e) {
         }
       } catch (error) {
-        console.error(`Error getting git status for ${repoPath}:`, error);
+        this.log("error", `Error getting git status for ${repoPath}`, error);
       }
       return status;
     });
@@ -1117,6 +1192,23 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
     })));
     new import_obsidian3.Setting(containerEl).setName("Auto Switch to Main").setDesc("Automatically switch back to main branch when automode is disabled").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.autoSwitchToMain).onChange((value) => __async(this, null, function* () {
       this.plugin.automodeSettings.autoSwitchToMain = value;
+      yield this.plugin.saveSettings();
+    })));
+    containerEl.createEl("h3", { text: "Debug Settings" });
+    new import_obsidian3.Setting(containerEl).setName("Debug Mode").setDesc("Show debug messages as notifications (for troubleshooting)").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.debugMode).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.debugMode = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Log Level").setDesc("Console logging level (check Developer Console: Ctrl+Shift+I)").addDropdown((dropdown) => dropdown.addOption("error", "Error only").addOption("warn", "Warning and above").addOption("info", "Info and above").addOption("debug", "All messages").setValue(this.plugin.automodeSettings.logLevel).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.logLevel = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Enable File Logging").setDesc("Save logs to a file in your vault directory").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enableFileLogging).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.enableFileLogging = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Log File Path").setDesc("Path to log file (relative to vault directory)").addText((text) => text.setPlaceholder("multi-git-debug.log").setValue(this.plugin.automodeSettings.logFilePath).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.logFilePath = value || "multi-git-debug.log";
       yield this.plugin.saveSettings();
     })));
   }

@@ -110,7 +110,7 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async onload() {
-        this.log('info', 'Loading Multi Git Manager plugin v1.1.0');
+        this.log('info', 'Loading Multi Git Manager plugin v1.1.2.1');
 
         // Load settings
         await this.loadSettings();
@@ -198,7 +198,27 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, await this.loadData());
+        const loadedData = await this.loadData();
+        this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, loadedData);
+        
+        // Ensure new settings exist (for compatibility with older versions)
+        if (this.automodeSettings.enableFileLogging === undefined) {
+            this.automodeSettings.enableFileLogging = false;
+        }
+        if (!this.automodeSettings.logFilePath) {
+            this.automodeSettings.logFilePath = 'multi-git-debug.log';
+        }
+        if (this.automodeSettings.debugMode === undefined) {
+            this.automodeSettings.debugMode = false;
+        }
+        if (!this.automodeSettings.logLevel) {
+            this.automodeSettings.logLevel = 'info';
+        }
+        
+        this.log('debug', 'Settings migration completed, current settings:', this.automodeSettings);
+        
+        // Save updated settings to ensure new fields are persisted
+        await this.saveSettings();
     }
 
     async saveSettings() {
