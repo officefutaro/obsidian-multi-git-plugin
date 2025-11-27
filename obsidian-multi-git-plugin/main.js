@@ -86,9 +86,42 @@ var GitManagerView = class extends import_obsidian.ItemView {
       const refreshBtnContainer = controlsEl.createEl("div", { cls: "git-control-button" });
       this.refreshButton = new import_obsidian.ButtonComponent(refreshBtnContainer).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
       const globalActionsEl = controlsEl.createEl("div", { cls: "git-global-actions" });
-      new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u{1F4DD} Commit All").setTooltip("Commit changes to all repositories").onClick(() => this.plugin.showCommitModal());
-      new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u2B06\uFE0F Push All").setTooltip("Push all repositories").onClick(() => this.plugin.gitPush());
-      new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u2B07\uFE0F Pull All").setTooltip("Pull all repositories").onClick(() => this.plugin.gitPull());
+      this.commitAllButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u{1F4DD} Commit All").setTooltip("Commit changes to all repositories").onClick(() => __async(this, null, function* () {
+        this.commitAllButton.setButtonText("\u23F3 Committing...");
+        this.commitAllButton.setDisabled(true);
+        this.commitAllButton.buttonEl.addClass("is-loading");
+        try {
+          yield this.plugin.showCommitModal();
+        } finally {
+          this.commitAllButton.setButtonText("\u{1F4DD} Commit All");
+          this.commitAllButton.setDisabled(false);
+          this.commitAllButton.buttonEl.removeClass("is-loading");
+        }
+      }));
+      this.pushAllButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u2B06\uFE0F Push All").setTooltip("Push all repositories").onClick(() => __async(this, null, function* () {
+        this.pushAllButton.setButtonText("\u23F3 Pushing...");
+        this.pushAllButton.setDisabled(true);
+        this.pushAllButton.buttonEl.addClass("is-loading");
+        try {
+          yield this.plugin.gitPush();
+        } finally {
+          this.pushAllButton.setButtonText("\u2B06\uFE0F Push All");
+          this.pushAllButton.setDisabled(false);
+          this.pushAllButton.buttonEl.removeClass("is-loading");
+        }
+      }));
+      this.pullAllButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u2B07\uFE0F Pull All").setTooltip("Pull all repositories").onClick(() => __async(this, null, function* () {
+        this.pullAllButton.setButtonText("\u23F3 Pulling...");
+        this.pullAllButton.setDisabled(true);
+        this.pullAllButton.buttonEl.addClass("is-loading");
+        try {
+          yield this.plugin.gitPull();
+        } finally {
+          this.pullAllButton.setButtonText("\u2B07\uFE0F Pull All");
+          this.pullAllButton.setDisabled(false);
+          this.pullAllButton.buttonEl.removeClass("is-loading");
+        }
+      }));
       this.repositoryContainer = container.createEl("div", { cls: "git-repository-container" });
       yield this.refreshView();
     });
@@ -138,9 +171,42 @@ var GitManagerView = class extends import_obsidian.ItemView {
       const statusEl = repoEl.createEl("div", { cls: "git-repo-status" });
       statusEl.createEl("div", { text: "Loading...", cls: "git-status-loading" });
       const actionsEl = repoEl.createEl("div", { cls: "git-repo-actions" });
-      new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u{1F4DD} Commit").setTooltip(`Commit changes in ${repo.name}`).onClick(() => this.commitRepository(repo));
-      new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u2B06\uFE0F Push").setTooltip(`Push ${repo.name}`).onClick(() => this.pushRepository(repo));
-      new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u2B07\uFE0F Pull").setTooltip(`Pull ${repo.name}`).onClick(() => this.pullRepository(repo));
+      const commitBtn = new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u{1F4DD} Commit").setTooltip(`Commit changes in ${repo.name}`).onClick(() => __async(this, null, function* () {
+        commitBtn.setButtonText("\u23F3 Committing...");
+        commitBtn.setDisabled(true);
+        commitBtn.buttonEl.addClass("is-loading");
+        try {
+          yield this.commitRepository(repo);
+        } finally {
+          commitBtn.setButtonText("\u{1F4DD} Commit");
+          commitBtn.setDisabled(false);
+          commitBtn.buttonEl.removeClass("is-loading");
+        }
+      }));
+      const pushBtn = new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u2B06\uFE0F Push").setTooltip(`Push ${repo.name}`).onClick(() => __async(this, null, function* () {
+        pushBtn.setButtonText("\u23F3 Pushing...");
+        pushBtn.setDisabled(true);
+        pushBtn.buttonEl.addClass("is-loading");
+        try {
+          yield this.pushRepository(repo);
+        } finally {
+          pushBtn.setButtonText("\u2B06\uFE0F Push");
+          pushBtn.setDisabled(false);
+          pushBtn.buttonEl.removeClass("is-loading");
+        }
+      }));
+      const pullBtn = new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u2B07\uFE0F Pull").setTooltip(`Pull ${repo.name}`).onClick(() => __async(this, null, function* () {
+        pullBtn.setButtonText("\u23F3 Pulling...");
+        pullBtn.setDisabled(true);
+        pullBtn.buttonEl.addClass("is-loading");
+        try {
+          yield this.pullRepository(repo);
+        } finally {
+          pullBtn.setButtonText("\u2B07\uFE0F Pull");
+          pullBtn.setDisabled(false);
+          pullBtn.buttonEl.removeClass("is-loading");
+        }
+      }));
       this.loadRepositoryStatus(repo, statusEl);
     });
   }
