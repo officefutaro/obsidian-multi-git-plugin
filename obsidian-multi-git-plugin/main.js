@@ -93,11 +93,31 @@ var GitManagerView = class extends import_obsidian.ItemView {
   }
   onOpen() {
     return __async(this, null, function* () {
+      var _a;
       const container = this.containerEl.children[1];
       container.empty();
       container.addClass("git-manager-view");
       const headerEl = container.createEl("div", { cls: "git-manager-header" });
       headerEl.createEl("h2", { text: "Git Repository Manager", cls: "git-manager-title" });
+      const versionEl = headerEl.createEl("div", {
+        cls: "git-version-info",
+        attr: { style: "font-size: 0.9em; color: var(--text-muted); margin-top: 5px;" }
+      });
+      versionEl.createEl("span", { text: "Multi-Git Plugin v1.1.2.3" });
+      versionEl.createEl("span", { text: " | ", attr: { style: "margin: 0 8px;" } });
+      versionEl.createEl("span", { text: `Settings: ${this.plugin.automodeSettings ? "Loaded" : "Not loaded"}` });
+      versionEl.createEl("span", { text: " | ", attr: { style: "margin: 0 8px;" } });
+      versionEl.createEl("span", { text: `Automode: ${((_a = this.plugin.automodeSettings) == null ? void 0 : _a.enabled) ? "Enabled" : "Disabled"}` });
+      const diagButton = headerEl.createEl("button", {
+        text: "\u2699\uFE0F Open Plugin Settings",
+        attr: {
+          style: "margin-top: 10px; padding: 5px 10px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 3px; cursor: pointer;"
+        }
+      });
+      diagButton.onclick = () => {
+        this.plugin.app.setting.open();
+        this.plugin.app.setting.openTabById("obsidian-multi-git");
+      };
       const controlsEl = container.createEl("div", { cls: "git-manager-controls" });
       const refreshBtnContainer = controlsEl.createEl("div", { cls: "git-control-button" });
       this.refreshButton = new import_obsidian.ButtonComponent(refreshBtnContainer).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
@@ -735,7 +755,7 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
   }
   onload() {
     return __async(this, null, function* () {
-      this.log("info", "Loading Multi Git Manager plugin v1.1.2.2");
+      this.log("info", "Loading Multi Git Manager plugin v1.1.2.3");
       yield this.loadSettings();
       this.log("debug", "Settings loaded:", this.automodeSettings);
       this.automodeManager = new AutomodeManager(this);
@@ -1161,7 +1181,7 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
       cls: "setting-item-info",
       attr: { style: "margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;" }
     });
-    debugInfo.createEl("div", { text: `Plugin Version: v1.1.2.2` });
+    debugInfo.createEl("div", { text: `Plugin Version: v1.1.2.3` });
     debugInfo.createEl("div", { text: `Settings loaded: ${this.plugin.automodeSettings ? "Yes" : "No"}` });
     debugInfo.createEl("div", { text: `Debug mode: ${(_a = this.plugin.automodeSettings) == null ? void 0 : _a.debugMode}` });
     debugInfo.createEl("div", { text: `File logging: ${(_b = this.plugin.automodeSettings) == null ? void 0 : _b.enableFileLogging}` });

@@ -1,7 +1,7 @@
 {
   "id": "obsidian-multi-git",
   "name": "Multi Git Manager",
-  "version": "1.1.2.2",
+  "version": "1.1.2.3",
   "minAppVersion": "1.0.0",
   "description": "Manage multiple Git repositories including parent directories",
   "author": "Your Name",

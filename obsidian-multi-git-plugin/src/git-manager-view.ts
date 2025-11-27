@@ -42,6 +42,29 @@ export class GitManagerView extends ItemView {
         const headerEl = container.createEl('div', { cls: 'git-manager-header' });
         headerEl.createEl('h2', { text: 'Git Repository Manager', cls: 'git-manager-title' });
         
+        // Version info
+        const versionEl = headerEl.createEl('div', { 
+            cls: 'git-version-info',
+            attr: { style: 'font-size: 0.9em; color: var(--text-muted); margin-top: 5px;' }
+        });
+        versionEl.createEl('span', { text: 'Multi-Git Plugin v1.1.2.3' });
+        versionEl.createEl('span', { text: ' | ', attr: { style: 'margin: 0 8px;' } });
+        versionEl.createEl('span', { text: `Settings: ${this.plugin.automodeSettings ? 'Loaded' : 'Not loaded'}` });
+        versionEl.createEl('span', { text: ' | ', attr: { style: 'margin: 0 8px;' } });
+        versionEl.createEl('span', { text: `Automode: ${this.plugin.automodeSettings?.enabled ? 'Enabled' : 'Disabled'}` });
+        
+        // Settings diagnostic button
+        const diagButton = headerEl.createEl('button', { 
+            text: '⚙️ Open Plugin Settings',
+            attr: { 
+                style: 'margin-top: 10px; padding: 5px 10px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 3px; cursor: pointer;'
+            }
+        });
+        diagButton.onclick = () => {
+            this.plugin.app.setting.open();
+            this.plugin.app.setting.openTabById('obsidian-multi-git');
+        };
+        
         // Controls Section
         const controlsEl = container.createEl('div', { cls: 'git-manager-controls' });
         
