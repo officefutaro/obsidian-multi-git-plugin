@@ -33,6 +33,8 @@ export interface AutomodeSettings {
     useSeparateBranch: boolean;
     automodeBranchName: string;
     autoSwitchToMain: boolean;
+    debugMode: boolean;
+    logLevel: 'error' | 'warn' | 'info' | 'debug';
 }
 
 export const DEFAULT_AUTOMODE_SETTINGS: AutomodeSettings = {
@@ -44,7 +46,9 @@ export const DEFAULT_AUTOMODE_SETTINGS: AutomodeSettings = {
     excludeRepositories: [],
     useSeparateBranch: true,
     automodeBranchName: "automode",
-    autoSwitchToMain: true
+    autoSwitchToMain: true,
+    debugMode: false,
+    logLevel: 'info'
 };
 
 export default class MultiGitPlugin extends Plugin {
@@ -53,14 +57,38 @@ export default class MultiGitPlugin extends Plugin {
     automodeSettings: AutomodeSettings = { ...DEFAULT_AUTOMODE_SETTINGS };
     automodeManager: AutomodeManager;
 
+    // Logger utility
+    log(level: 'error' | 'warn' | 'info' | 'debug', message: string, ...args: any[]) {
+        const logLevels = { error: 0, warn: 1, info: 2, debug: 3 };
+        const currentLevel = logLevels[this.automodeSettings.logLevel];
+        const messageLevel = logLevels[level];
+        
+        if (messageLevel <= currentLevel) {
+            const prefix = `[Multi-Git ${level.toUpperCase()}]`;
+            console[level === 'debug' ? 'log' : level](`${prefix} ${message}`, ...args);
+            
+            // Show notices for errors and warnings (if notifications enabled)
+            if (this.automodeSettings.showNotifications && (level === 'error' || level === 'warn')) {
+                new Notice(`${prefix} ${message}`);
+            }
+            
+            // Debug mode shows all messages as notices
+            if (this.automodeSettings.debugMode && level === 'debug') {
+                new Notice(`${prefix} ${message}`);
+            }
+        }
+    }
+
     async onload() {
-        console.log('Loading Multi Git Manager plugin');
+        this.log('info', 'Loading Multi Git Manager plugin v1.1.0');
 
         // Load settings
         await this.loadSettings();
+        this.log('debug', 'Settings loaded:', this.automodeSettings);
 
         // Initialize automode manager
         this.automodeManager = new AutomodeManager(this);
+        this.log('debug', 'Automode manager initialized');
 
         // Register the custom view
         this.registerView(
@@ -78,7 +106,10 @@ export default class MultiGitPlugin extends Plugin {
 
         // Start automode if enabled
         if (this.automodeSettings.enabled) {
+            this.log('info', 'Starting automode on plugin load');
             this.automodeManager.startAutomode();
+        } else {
+            this.log('debug', 'Automode disabled in settings');
         }
 
         this.addCommand({
@@ -132,6 +163,8 @@ export default class MultiGitPlugin extends Plugin {
         );
 
         await this.updateStatusBar();
+        
+        this.log('info', 'Multi Git Manager plugin loaded successfully');
     }
 
     async loadSettings() {
@@ -153,16 +186,21 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async detectRepositories() {
+        this.log('debug', 'Starting repository detection...');
         this.repositories = [];
         
         const vaultPath = (this.app.vault.adapter as any).basePath;
+        this.log('debug', 'Vault path:', vaultPath);
         
         const checkGitRepo = async (dirPath: string, name: string, isParent: boolean = false) => {
             try {
+                this.log('debug', `Checking Git repository: ${dirPath}`);
                 await execAsync('git status', { cwd: dirPath });
                 this.repositories.push({ path: dirPath, name, isParent });
+                this.log('info', `Found Git repository: ${name} at ${dirPath}`);
                 return true;
-            } catch {
+            } catch (error) {
+                this.log('debug', `Not a Git repository: ${dirPath}`, error);
                 return false;
             }
         };
@@ -181,7 +219,8 @@ export default class MultiGitPlugin extends Plugin {
             await checkGitRepo(fullPath, folder, false);
         }
 
-        console.log(`Detected ${this.repositories.length} Git repositories`);
+        this.log('info', `Detected ${this.repositories.length} Git repositories:`, 
+            this.repositories.map(r => `${r.name} (${r.path})`));
     }
 
     async getGitStatus(repoPath: string): Promise<GitStatus> {
@@ -224,7 +263,7 @@ export default class MultiGitPlugin extends Plugin {
                 // Remote might not exist
             }
         } catch (error) {
-            console.error(`Error getting git status for ${repoPath}:`, error);
+            this.log('error', `Error getting git status for ${repoPath}`, error);
         }
 
         return status;
@@ -611,6 +650,33 @@ class MultiGitSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.automodeSettings.autoSwitchToMain)
                 .onChange(async (value) => {
                     this.plugin.automodeSettings.autoSwitchToMain = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // Debug section
+        containerEl.createEl('h3', { text: 'Debug Settings' });
+
+        new Setting(containerEl)
+            .setName('Debug Mode')
+            .setDesc('Show debug messages as notifications (for troubleshooting)')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.automodeSettings.debugMode)
+                .onChange(async (value) => {
+                    this.plugin.automodeSettings.debugMode = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Log Level')
+            .setDesc('Console logging level (check Developer Console: Ctrl+Shift+I)')
+            .addDropdown(dropdown => dropdown
+                .addOption('error', 'Error only')
+                .addOption('warn', 'Warning and above')
+                .addOption('info', 'Info and above')
+                .addOption('debug', 'All messages')
+                .setValue(this.plugin.automodeSettings.logLevel)
+                .onChange(async (value: 'error' | 'warn' | 'info' | 'debug') => {
+                    this.plugin.automodeSettings.logLevel = value;
                     await this.plugin.saveSettings();
                 }));
     }

@@ -41,7 +41,7 @@ export class AutomodeManager {
             new Notice(`🤖 Automode started (${this.plugin.automodeSettings.interval}s interval)`);
         }
 
-        console.log('Automode started with interval:', this.plugin.automodeSettings.interval, 'seconds');
+        this.plugin.log('info', `Automode started with ${this.plugin.automodeSettings.interval}s interval`);
     }
 
     stopAutomode(): void {
@@ -57,7 +57,7 @@ export class AutomodeManager {
             new Notice('⏸️ Automode stopped');
         }
 
-        console.log('Automode stopped');
+        this.plugin.log('info', 'Automode stopped');
     }
 
     toggleAutomode(): void {
@@ -87,12 +87,13 @@ export class AutomodeManager {
 
     private async executeAutomodeCheck(): Promise<void> {
         if (this.isRunning) {
-            console.log('Automode check skipped - already running');
+            this.plugin.log('debug', 'Automode check skipped - already running');
             return;
         }
 
         this.isRunning = true;
         this.updateStatusBar();
+        this.plugin.log('debug', 'Starting automode check...');
 
         try {
             let processedCount = 0;
@@ -100,22 +101,27 @@ export class AutomodeManager {
             for (const repo of this.plugin.repositories) {
                 // Skip excluded repositories
                 if (this.plugin.automodeSettings.excludeRepositories.includes(repo.path)) {
+                    this.plugin.log('debug', `Skipping excluded repository: ${repo.name}`);
                     continue;
                 }
 
+                this.plugin.log('debug', `Checking repository: ${repo.name} at ${repo.path}`);
                 const hasChanges = await this.detectChanges(repo);
                 if (hasChanges) {
+                    this.plugin.log('info', `Auto-committing changes in ${repo.name}`);
                     await this.executeAutoCommit(repo);
                     processedCount++;
                 }
             }
+
+            this.plugin.log('info', `Automode check completed: ${processedCount} repositories processed`);
 
             if (processedCount > 0 && this.plugin.automodeSettings.showNotifications) {
                 new Notice(`✅ Auto-committed changes in ${processedCount} repositories`);
             }
 
         } catch (error) {
-            console.error('Automode execution error:', error);
+            this.plugin.log('error', 'Automode execution error:', error);
             if (this.plugin.automodeSettings.showNotifications) {
                 new Notice(`❌ Automode error: ${error.message}`);
             }
@@ -136,7 +142,7 @@ export class AutomodeManager {
                 status.untracked.length > 0
             );
         } catch (error) {
-            console.error(`Failed to detect changes in ${repo.path}:`, error);
+            this.plugin.log('error', `Failed to detect changes in ${repo.path}:`, error);
             return false;
         }
     }
@@ -163,10 +169,10 @@ export class AutomodeManager {
                 await this.plugin.executeGitCommand(repo.path, `push origin ${pushBranch}`);
             }
 
-            console.log(`Auto-committed changes in ${repo.name}: ${message}`);
+            this.plugin.log('info', `Auto-committed changes in ${repo.name}: ${message}`);
 
         } catch (error) {
-            console.error(`Failed to auto-commit in ${repo.path}:`, error);
+            this.plugin.log('error', `Failed to auto-commit in ${repo.path}:`, error);
             
             // Handle specific Git errors
             if (error.message.includes('CONFLICT')) {
