@@ -48,7 +48,7 @@ export class GitManagerView extends ItemView {
                 style: 'font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);'
             }
         });
-        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.2.5 🚨' });
+        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.3 🚨' });
         
         // Get actual plugin info from app
         const pluginInstance = (this.app as any).plugins?.plugins?.['obsidian-multi-git-plugin'];
@@ -59,7 +59,7 @@ export class GitManagerView extends ItemView {
                 style: 'font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;'
             }
         });
-        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.2.5` });
+        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.3` });
         debugInfoEl.createEl('div', { text: `Manifest Version: ${manifestData?.version || 'UNKNOWN'}` });
         debugInfoEl.createEl('div', { text: `Plugin ID: ${manifestData?.id || 'UNKNOWN'}` });
         debugInfoEl.createEl('div', { text: `Plugin Name: ${manifestData?.name || 'UNKNOWN'}` });

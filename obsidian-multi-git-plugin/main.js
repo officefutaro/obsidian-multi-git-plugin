@@ -104,7 +104,7 @@ var GitManagerView = class extends import_obsidian.ItemView {
           style: "font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);"
         }
       });
-      forceVersionEl.createEl("div", { text: "\u{1F6A8} PLUGIN VERSION CHECK v1.1.2.5 \u{1F6A8}" });
+      forceVersionEl.createEl("div", { text: "\u{1F6A8} PLUGIN VERSION CHECK v1.1.3 \u{1F6A8}" });
       const pluginInstance = (_b = (_a = this.app.plugins) == null ? void 0 : _a.plugins) == null ? void 0 : _b["obsidian-multi-git-plugin"];
       const manifestData = pluginInstance == null ? void 0 : pluginInstance.manifest;
       const debugInfoEl = headerEl.createEl("div", {
@@ -112,7 +112,7 @@ var GitManagerView = class extends import_obsidian.ItemView {
           style: "font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;"
         }
       });
-      debugInfoEl.createEl("div", { text: `Expected Version: v1.1.2.5` });
+      debugInfoEl.createEl("div", { text: `Expected Version: v1.1.3` });
       debugInfoEl.createEl("div", { text: `Manifest Version: ${(manifestData == null ? void 0 : manifestData.version) || "UNKNOWN"}` });
       debugInfoEl.createEl("div", { text: `Plugin ID: ${(manifestData == null ? void 0 : manifestData.id) || "UNKNOWN"}` });
       debugInfoEl.createEl("div", { text: `Plugin Name: ${(manifestData == null ? void 0 : manifestData.name) || "UNKNOWN"}` });
@@ -792,7 +792,7 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
   }
   onload() {
     return __async(this, null, function* () {
-      this.log("info", "Loading Multi Git Manager plugin v1.1.2.5");
+      this.log("info", "Loading Multi Git Manager plugin v1.1.3");
       yield this.loadSettings();
       this.log("debug", "Settings loaded:", this.automodeSettings);
       this.automodeManager = new AutomodeManager(this);
@@ -1218,7 +1218,7 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
       cls: "setting-item-info",
       attr: { style: "margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;" }
     });
-    debugInfo.createEl("div", { text: `Plugin Version: v1.1.2.5` });
+    debugInfo.createEl("div", { text: `Plugin Version: v1.1.3` });
     debugInfo.createEl("div", { text: `Settings loaded: ${this.plugin.automodeSettings ? "Yes" : "No"}` });
     debugInfo.createEl("div", { text: `Debug mode: ${(_a = this.plugin.automodeSettings) == null ? void 0 : _a.debugMode}` });
     debugInfo.createEl("div", { text: `File logging: ${(_b = this.plugin.automodeSettings) == null ? void 0 : _b.enableFileLogging}` });

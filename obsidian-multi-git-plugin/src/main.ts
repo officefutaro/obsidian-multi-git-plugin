@@ -110,7 +110,7 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async onload() {
-        this.log('info', 'Loading Multi Git Manager plugin v1.1.2.5');
+        this.log('info', 'Loading Multi Git Manager plugin v1.1.3');
 
         // Load settings
         await this.loadSettings();
@@ -616,7 +616,7 @@ class MultiGitSettingTab extends PluginSettingTab {
             cls: 'setting-item-info',
             attr: { style: 'margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;' }
         });
-        debugInfo.createEl('div', { text: `Plugin Version: v1.1.2.5` });
+        debugInfo.createEl('div', { text: `Plugin Version: v1.1.3` });
         debugInfo.createEl('div', { text: `Settings loaded: ${this.plugin.automodeSettings ? 'Yes' : 'No'}` });
         debugInfo.createEl('div', { text: `Debug mode: ${this.plugin.automodeSettings?.debugMode}` });
         debugInfo.createEl('div', { text: `File logging: ${this.plugin.automodeSettings?.enableFileLogging}` });
