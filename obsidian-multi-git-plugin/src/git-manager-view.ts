@@ -42,27 +42,72 @@ export class GitManagerView extends ItemView {
         const headerEl = container.createEl('div', { cls: 'git-manager-header' });
         headerEl.createEl('h2', { text: 'Git Repository Manager', cls: 'git-manager-title' });
         
-        // Version info
-        const versionEl = headerEl.createEl('div', { 
-            cls: 'git-version-info',
-            attr: { style: 'font-size: 0.9em; color: var(--text-muted); margin-top: 5px;' }
+        // FORCE VERSION DISPLAY - ALWAYS VISIBLE
+        const forceVersionEl = headerEl.createEl('div', { 
+            attr: { 
+                style: 'font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);'
+            }
         });
-        versionEl.createEl('span', { text: 'Multi-Git Plugin v1.1.2.3' });
-        versionEl.createEl('span', { text: ' | ', attr: { style: 'margin: 0 8px;' } });
-        versionEl.createEl('span', { text: `Settings: ${this.plugin.automodeSettings ? 'Loaded' : 'Not loaded'}` });
-        versionEl.createEl('span', { text: ' | ', attr: { style: 'margin: 0 8px;' } });
-        versionEl.createEl('span', { text: `Automode: ${this.plugin.automodeSettings?.enabled ? 'Enabled' : 'Disabled'}` });
+        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.2.4 🚨' });
+        
+        // Get actual plugin info from app
+        const pluginInstance = (this.app as any).plugins?.plugins?.['obsidian-multi-git'];
+        const manifestData = pluginInstance?.manifest;
+        
+        const debugInfoEl = headerEl.createEl('div', { 
+            attr: { 
+                style: 'font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;'
+            }
+        });
+        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.2.4` });
+        debugInfoEl.createEl('div', { text: `Manifest Version: ${manifestData?.version || 'UNKNOWN'}` });
+        debugInfoEl.createEl('div', { text: `Plugin ID: ${manifestData?.id || 'UNKNOWN'}` });
+        debugInfoEl.createEl('div', { text: `Plugin Name: ${manifestData?.name || 'UNKNOWN'}` });
+        debugInfoEl.createEl('div', { text: `Plugin Found: ${pluginInstance ? 'YES' : 'NO'}` });
+        debugInfoEl.createEl('div', { text: `Settings Object: ${this.plugin.automodeSettings ? 'EXISTS' : 'MISSING'}` });
+        debugInfoEl.createEl('div', { text: `Current Time: ${new Date().toLocaleString()}` });
+        
+        // Plugin location detection
+        const locationInfoEl = headerEl.createEl('div', { 
+            attr: { 
+                style: 'font-size: 0.8em; margin: 5px 0; padding: 8px; background: var(--background-modifier-error); border-radius: 3px; color: var(--text-error);'
+            }
+        });
+        
+        // Check plugin directory
+        const allPlugins = (this.app as any).plugins?.manifests || {};
+        const ourPlugin = allPlugins['obsidian-multi-git'];
+        locationInfoEl.createEl('div', { text: `Plugin in manifests: ${ourPlugin ? 'YES' : 'NO'}` });
+        if (ourPlugin) {
+            locationInfoEl.createEl('div', { text: `Manifest Name: ${ourPlugin.name}` });
+            locationInfoEl.createEl('div', { text: `Manifest Version: ${ourPlugin.version}` });
+        }
+        
+        // Check all plugins with similar names
+        const similarPlugins = Object.keys(allPlugins).filter(id => id.includes('git') || allPlugins[id].name?.toLowerCase().includes('git'));
+        locationInfoEl.createEl('div', { text: `Git-related plugins: ${similarPlugins.join(', ')}` });
         
         // Settings diagnostic button
         const diagButton = headerEl.createEl('button', { 
-            text: '⚙️ Open Plugin Settings',
+            text: '🔍 Force Plugin Reload + Settings',
             attr: { 
-                style: 'margin-top: 10px; padding: 5px 10px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 3px; cursor: pointer;'
+                style: 'margin-top: 10px; padding: 5px 10px; background: var(--color-red); color: white; border: none; border-radius: 3px; cursor: pointer;'
             }
         });
-        diagButton.onclick = () => {
-            this.plugin.app.setting.open();
-            this.plugin.app.setting.openTabById('obsidian-multi-git');
+        diagButton.onclick = async () => {
+            // Force reload this plugin
+            try {
+                const plugins = (this.app as any).plugins;
+                await plugins.disablePlugin('obsidian-multi-git');
+                await new Promise(r => setTimeout(r, 1000));
+                await plugins.enablePlugin('obsidian-multi-git');
+                await new Promise(r => setTimeout(r, 1000));
+                
+                this.plugin.app.setting.open();
+                this.plugin.app.setting.openTabById('obsidian-multi-git');
+            } catch (error) {
+                console.error('Plugin reload error:', error);
+            }
         };
         
         // Controls Section

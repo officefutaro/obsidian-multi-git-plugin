@@ -93,31 +93,68 @@ var GitManagerView = class extends import_obsidian.ItemView {
   }
   onOpen() {
     return __async(this, null, function* () {
-      var _a;
+      var _a, _b, _c;
       const container = this.containerEl.children[1];
       container.empty();
       container.addClass("git-manager-view");
       const headerEl = container.createEl("div", { cls: "git-manager-header" });
       headerEl.createEl("h2", { text: "Git Repository Manager", cls: "git-manager-title" });
-      const versionEl = headerEl.createEl("div", {
-        cls: "git-version-info",
-        attr: { style: "font-size: 0.9em; color: var(--text-muted); margin-top: 5px;" }
-      });
-      versionEl.createEl("span", { text: "Multi-Git Plugin v1.1.2.3" });
-      versionEl.createEl("span", { text: " | ", attr: { style: "margin: 0 8px;" } });
-      versionEl.createEl("span", { text: `Settings: ${this.plugin.automodeSettings ? "Loaded" : "Not loaded"}` });
-      versionEl.createEl("span", { text: " | ", attr: { style: "margin: 0 8px;" } });
-      versionEl.createEl("span", { text: `Automode: ${((_a = this.plugin.automodeSettings) == null ? void 0 : _a.enabled) ? "Enabled" : "Disabled"}` });
-      const diagButton = headerEl.createEl("button", {
-        text: "\u2699\uFE0F Open Plugin Settings",
+      const forceVersionEl = headerEl.createEl("div", {
         attr: {
-          style: "margin-top: 10px; padding: 5px 10px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; border-radius: 3px; cursor: pointer;"
+          style: "font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);"
         }
       });
-      diagButton.onclick = () => {
-        this.plugin.app.setting.open();
-        this.plugin.app.setting.openTabById("obsidian-multi-git");
-      };
+      forceVersionEl.createEl("div", { text: "\u{1F6A8} PLUGIN VERSION CHECK v1.1.2.4 \u{1F6A8}" });
+      const pluginInstance = (_b = (_a = this.app.plugins) == null ? void 0 : _a.plugins) == null ? void 0 : _b["obsidian-multi-git"];
+      const manifestData = pluginInstance == null ? void 0 : pluginInstance.manifest;
+      const debugInfoEl = headerEl.createEl("div", {
+        attr: {
+          style: "font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;"
+        }
+      });
+      debugInfoEl.createEl("div", { text: `Expected Version: v1.1.2.4` });
+      debugInfoEl.createEl("div", { text: `Manifest Version: ${(manifestData == null ? void 0 : manifestData.version) || "UNKNOWN"}` });
+      debugInfoEl.createEl("div", { text: `Plugin ID: ${(manifestData == null ? void 0 : manifestData.id) || "UNKNOWN"}` });
+      debugInfoEl.createEl("div", { text: `Plugin Name: ${(manifestData == null ? void 0 : manifestData.name) || "UNKNOWN"}` });
+      debugInfoEl.createEl("div", { text: `Plugin Found: ${pluginInstance ? "YES" : "NO"}` });
+      debugInfoEl.createEl("div", { text: `Settings Object: ${this.plugin.automodeSettings ? "EXISTS" : "MISSING"}` });
+      debugInfoEl.createEl("div", { text: `Current Time: ${(/* @__PURE__ */ new Date()).toLocaleString()}` });
+      const locationInfoEl = headerEl.createEl("div", {
+        attr: {
+          style: "font-size: 0.8em; margin: 5px 0; padding: 8px; background: var(--background-modifier-error); border-radius: 3px; color: var(--text-error);"
+        }
+      });
+      const allPlugins = ((_c = this.app.plugins) == null ? void 0 : _c.manifests) || {};
+      const ourPlugin = allPlugins["obsidian-multi-git"];
+      locationInfoEl.createEl("div", { text: `Plugin in manifests: ${ourPlugin ? "YES" : "NO"}` });
+      if (ourPlugin) {
+        locationInfoEl.createEl("div", { text: `Manifest Name: ${ourPlugin.name}` });
+        locationInfoEl.createEl("div", { text: `Manifest Version: ${ourPlugin.version}` });
+      }
+      const similarPlugins = Object.keys(allPlugins).filter((id) => {
+        var _a2;
+        return id.includes("git") || ((_a2 = allPlugins[id].name) == null ? void 0 : _a2.toLowerCase().includes("git"));
+      });
+      locationInfoEl.createEl("div", { text: `Git-related plugins: ${similarPlugins.join(", ")}` });
+      const diagButton = headerEl.createEl("button", {
+        text: "\u{1F50D} Force Plugin Reload + Settings",
+        attr: {
+          style: "margin-top: 10px; padding: 5px 10px; background: var(--color-red); color: white; border: none; border-radius: 3px; cursor: pointer;"
+        }
+      });
+      diagButton.onclick = () => __async(this, null, function* () {
+        try {
+          const plugins = this.app.plugins;
+          yield plugins.disablePlugin("obsidian-multi-git");
+          yield new Promise((r) => setTimeout(r, 1e3));
+          yield plugins.enablePlugin("obsidian-multi-git");
+          yield new Promise((r) => setTimeout(r, 1e3));
+          this.plugin.app.setting.open();
+          this.plugin.app.setting.openTabById("obsidian-multi-git");
+        } catch (error) {
+          console.error("Plugin reload error:", error);
+        }
+      });
       const controlsEl = container.createEl("div", { cls: "git-manager-controls" });
       const refreshBtnContainer = controlsEl.createEl("div", { cls: "git-control-button" });
       this.refreshButton = new import_obsidian.ButtonComponent(refreshBtnContainer).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
@@ -755,7 +792,7 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
   }
   onload() {
     return __async(this, null, function* () {
-      this.log("info", "Loading Multi Git Manager plugin v1.1.2.3");
+      this.log("info", "Loading Multi Git Manager plugin v1.1.2.4");
       yield this.loadSettings();
       this.log("debug", "Settings loaded:", this.automodeSettings);
       this.automodeManager = new AutomodeManager(this);
@@ -1181,7 +1218,7 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
       cls: "setting-item-info",
       attr: { style: "margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;" }
     });
-    debugInfo.createEl("div", { text: `Plugin Version: v1.1.2.3` });
+    debugInfo.createEl("div", { text: `Plugin Version: v1.1.2.4` });
     debugInfo.createEl("div", { text: `Settings loaded: ${this.plugin.automodeSettings ? "Yes" : "No"}` });
     debugInfo.createEl("div", { text: `Debug mode: ${(_a = this.plugin.automodeSettings) == null ? void 0 : _a.debugMode}` });
     debugInfo.createEl("div", { text: `File logging: ${(_b = this.plugin.automodeSettings) == null ? void 0 : _b.enableFileLogging}` });
