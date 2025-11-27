@@ -1,6 +1,7 @@
 import { Plugin, Notice, Modal, App, Setting, ItemView, WorkspaceLeaf, ButtonComponent, PluginSettingTab } from 'obsidian';
 import { exec, ExecException } from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 import { promisify } from 'util';
 import { GitManagerView, GIT_MANAGER_VIEW_TYPE } from './git-manager-view';
 import { AutomodeManager } from './automode-manager';
@@ -35,6 +36,8 @@ export interface AutomodeSettings {
     autoSwitchToMain: boolean;
     debugMode: boolean;
     logLevel: 'error' | 'warn' | 'info' | 'debug';
+    enableFileLogging: boolean;
+    logFilePath: string;
 }
 
 export const DEFAULT_AUTOMODE_SETTINGS: AutomodeSettings = {
@@ -48,7 +51,9 @@ export const DEFAULT_AUTOMODE_SETTINGS: AutomodeSettings = {
     automodeBranchName: "automode",
     autoSwitchToMain: true,
     debugMode: false,
-    logLevel: 'info'
+    logLevel: 'info',
+    enableFileLogging: false,
+    logFilePath: 'multi-git-debug.log'
 };
 
 export default class MultiGitPlugin extends Plugin {
@@ -64,8 +69,20 @@ export default class MultiGitPlugin extends Plugin {
         const messageLevel = logLevels[level];
         
         if (messageLevel <= currentLevel) {
+            const timestamp = new Date().toISOString();
             const prefix = `[Multi-Git ${level.toUpperCase()}]`;
-            console[level === 'debug' ? 'log' : level](`${prefix} ${message}`, ...args);
+            const fullMessage = `${prefix} ${message}`;
+            const argsStr = args.length > 0 ? ' ' + args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+            ).join(' ') : '';
+            
+            // Console logging
+            console[level === 'debug' ? 'log' : level](fullMessage, ...args);
+            
+            // File logging
+            if (this.automodeSettings.enableFileLogging) {
+                this.writeToLogFile(`${timestamp} ${fullMessage}${argsStr}`);
+            }
             
             // Show notices for errors and warnings (if notifications enabled)
             if (this.automodeSettings.showNotifications && (level === 'error' || level === 'warn')) {
@@ -76,6 +93,19 @@ export default class MultiGitPlugin extends Plugin {
             if (this.automodeSettings.debugMode && level === 'debug') {
                 new Notice(`${prefix} ${message}`);
             }
+        }
+    }
+
+    private async writeToLogFile(logEntry: string): Promise<void> {
+        try {
+            const vaultPath = (this.app.vault.adapter as any).basePath;
+            const logPath = path.join(vaultPath, this.automodeSettings.logFilePath);
+            
+            // Append to log file
+            fs.appendFileSync(logPath, logEntry + '\n', 'utf8');
+        } catch (error) {
+            // Fallback to console only if file logging fails
+            console.error('[Multi-Git] Failed to write to log file:', error);
         }
     }
 
@@ -677,6 +707,27 @@ class MultiGitSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.automodeSettings.logLevel)
                 .onChange(async (value: 'error' | 'warn' | 'info' | 'debug') => {
                     this.plugin.automodeSettings.logLevel = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Enable File Logging')
+            .setDesc('Save logs to a file in your vault directory')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.automodeSettings.enableFileLogging)
+                .onChange(async (value) => {
+                    this.plugin.automodeSettings.enableFileLogging = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Log File Path')
+            .setDesc('Path to log file (relative to vault directory)')
+            .addText(text => text
+                .setPlaceholder('multi-git-debug.log')
+                .setValue(this.plugin.automodeSettings.logFilePath)
+                .onChange(async (value) => {
+                    this.plugin.automodeSettings.logFilePath = value || 'multi-git-debug.log';
                     await this.plugin.saveSettings();
                 }));
     }
