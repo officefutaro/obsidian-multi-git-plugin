@@ -110,7 +110,7 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async onload() {
-        this.log('info', 'Loading Multi Git Manager plugin v1.1.4');
+        this.log('info', `Loading Multi Git Manager plugin v${this.manifest.version}`);
 
         // Load settings
         await this.loadSettings();
@@ -609,7 +609,7 @@ class MultiGitSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Multi Git Manager Settings v1.1.4 🚀' });
+        containerEl.createEl('h2', { text: `Multi Git Manager Settings v${this.plugin.manifest.version} 🚀` });
         
         // MASSIVE UPDATE BANNER - CANNOT BE MISSED
         const updateBanner = containerEl.createEl('div', { 
@@ -617,14 +617,14 @@ class MultiGitSettingTab extends PluginSettingTab {
                 style: 'font-size: 1.5em; font-weight: bold; color: white; background: linear-gradient(90deg, blue, purple); margin: 20px 0; padding: 20px; border-radius: 15px; border: 4px solid cyan; text-align: center; box-shadow: 0 0 20px rgba(0,255,255,0.5);'
             }
         });
-        updateBanner.innerHTML = '🎉 NEW SETTINGS CODE v1.1.4 IS ACTIVE! 🎉<br><small>If you see this, the code has been updated!</small>';
+        updateBanner.innerHTML = `🎉 NEW SETTINGS CODE v${this.plugin.manifest.version} IS ACTIVE! 🎉<br><small>If you see this, the code has been updated!</small>`;
         
         // Debug info at top
         const debugInfo = containerEl.createEl('div', { 
             cls: 'setting-item-info',
             attr: { style: 'margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;' }
         });
-        debugInfo.createEl('div', { text: `Plugin Version: v1.1.4` });
+        debugInfo.createEl('div', { text: `Plugin Version: v${this.plugin.manifest.version}` });
         debugInfo.createEl('div', { text: `Settings loaded: ${this.plugin.automodeSettings ? 'Yes' : 'No'}` });
         debugInfo.createEl('div', { text: `Debug mode: ${this.plugin.automodeSettings?.debugMode}` });
         debugInfo.createEl('div', { text: `File logging: ${this.plugin.automodeSettings?.enableFileLogging}` });

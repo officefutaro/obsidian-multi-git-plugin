@@ -98,13 +98,13 @@ var GitManagerView = class extends import_obsidian.ItemView {
       container.empty();
       container.addClass("git-manager-view");
       const headerEl = container.createEl("div", { cls: "git-manager-header" });
-      headerEl.createEl("h2", { text: "Git Repository Manager v1.1.4 \u{1F525}", cls: "git-manager-title" });
+      headerEl.createEl("h2", { text: `Git Repository Manager v${this.plugin.manifest.version} \u{1F525}`, cls: "git-manager-title" });
       const urgentNotice = headerEl.createEl("div", {
         attr: {
           style: "font-size: 1.3em; font-weight: bold; color: white; background: linear-gradient(45deg, red, orange); margin: 15px 0; padding: 15px; border-radius: 10px; border: 3px solid yellow; text-align: center; animation: blink 1s infinite;"
         }
       });
-      urgentNotice.innerHTML = "\u26A0\uFE0F CODE UPDATED TO v1.1.4 - IF YOU SEE THIS, NEW CODE IS RUNNING! \u26A0\uFE0F";
+      urgentNotice.innerHTML = `\u26A0\uFE0F CODE UPDATED TO v${this.plugin.manifest.version} - IF YOU SEE THIS, NEW CODE IS RUNNING! \u26A0\uFE0F`;
       const style = container.createEl("style");
       style.textContent = `
             @keyframes blink {
@@ -118,7 +118,7 @@ var GitManagerView = class extends import_obsidian.ItemView {
           style: "font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);"
         }
       });
-      forceVersionEl.createEl("div", { text: "\u{1F6A8} PLUGIN VERSION CHECK v1.1.4 \u{1F6A8}" });
+      forceVersionEl.createEl("div", { text: `\u{1F6A8} PLUGIN VERSION CHECK v${this.plugin.manifest.version} \u{1F6A8}` });
       const pluginInstance = (_b = (_a = this.app.plugins) == null ? void 0 : _a.plugins) == null ? void 0 : _b["obsidian-multi-git-plugin"];
       const manifestData = pluginInstance == null ? void 0 : pluginInstance.manifest;
       const debugInfoEl = headerEl.createEl("div", {
@@ -126,7 +126,7 @@ var GitManagerView = class extends import_obsidian.ItemView {
           style: "font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;"
         }
       });
-      debugInfoEl.createEl("div", { text: `Expected Version: v1.1.4` });
+      debugInfoEl.createEl("div", { text: `Expected Version: v${this.plugin.manifest.version}` });
       debugInfoEl.createEl("div", { text: `Manifest Version: ${(manifestData == null ? void 0 : manifestData.version) || "UNKNOWN"}` });
       debugInfoEl.createEl("div", { text: `Plugin ID: ${(manifestData == null ? void 0 : manifestData.id) || "UNKNOWN"}` });
       debugInfoEl.createEl("div", { text: `Plugin Name: ${(manifestData == null ? void 0 : manifestData.name) || "UNKNOWN"}` });
@@ -806,7 +806,7 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
   }
   onload() {
     return __async(this, null, function* () {
-      this.log("info", "Loading Multi Git Manager plugin v1.1.4");
+      this.log("info", `Loading Multi Git Manager plugin v${this.manifest.version}`);
       yield this.loadSettings();
       this.log("debug", "Settings loaded:", this.automodeSettings);
       this.automodeManager = new AutomodeManager(this);
@@ -1227,18 +1227,18 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
     var _a, _b;
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Multi Git Manager Settings v1.1.4 \u{1F680}" });
+    containerEl.createEl("h2", { text: `Multi Git Manager Settings v${this.plugin.manifest.version} \u{1F680}` });
     const updateBanner = containerEl.createEl("div", {
       attr: {
         style: "font-size: 1.5em; font-weight: bold; color: white; background: linear-gradient(90deg, blue, purple); margin: 20px 0; padding: 20px; border-radius: 15px; border: 4px solid cyan; text-align: center; box-shadow: 0 0 20px rgba(0,255,255,0.5);"
       }
     });
-    updateBanner.innerHTML = "\u{1F389} NEW SETTINGS CODE v1.1.4 IS ACTIVE! \u{1F389}<br><small>If you see this, the code has been updated!</small>";
+    updateBanner.innerHTML = `\u{1F389} NEW SETTINGS CODE v${this.plugin.manifest.version} IS ACTIVE! \u{1F389}<br><small>If you see this, the code has been updated!</small>`;
     const debugInfo = containerEl.createEl("div", {
       cls: "setting-item-info",
       attr: { style: "margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;" }
     });
-    debugInfo.createEl("div", { text: `Plugin Version: v1.1.4` });
+    debugInfo.createEl("div", { text: `Plugin Version: v${this.plugin.manifest.version}` });
     debugInfo.createEl("div", { text: `Settings loaded: ${this.plugin.automodeSettings ? "Yes" : "No"}` });
     debugInfo.createEl("div", { text: `Debug mode: ${(_a = this.plugin.automodeSettings) == null ? void 0 : _a.debugMode}` });
     debugInfo.createEl("div", { text: `File logging: ${(_b = this.plugin.automodeSettings) == null ? void 0 : _b.enableFileLogging}` });
