@@ -2,7 +2,18 @@
 
 複数のGitリポジトリを一元管理するObsidianプラグイン / Manage multiple Git repositories within Obsidian
 
-## Version 0.9.1
+## 🔄 継続作業用ガイド
+
+**⚠️ Windows再起動後はこちらを確認**: [`RESTART_GUIDE.md`](./RESTART_GUIDE.md)
+
+### 現在のステータス (v1.1.4)
+- ✅ プラグイン開発完了
+- ✅ GitHub v1.1.4 プッシュ済み  
+- ❌ ユーザー環境でコード更新が反映されない問題
+
+**次の作業**: Windows再起動後の表示確認と対処
+
+## Version 1.1.4
 
 ## 🎯 機能 / Features
 
