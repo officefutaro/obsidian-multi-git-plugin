@@ -48,10 +48,10 @@ export class GitManagerView extends ItemView {
                 style: 'font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);'
             }
         });
-        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.2.4 🚨' });
+        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.2.5 🚨' });
         
         // Get actual plugin info from app
-        const pluginInstance = (this.app as any).plugins?.plugins?.['obsidian-multi-git'];
+        const pluginInstance = (this.app as any).plugins?.plugins?.['obsidian-multi-git-plugin'];
         const manifestData = pluginInstance?.manifest;
         
         const debugInfoEl = headerEl.createEl('div', { 
@@ -59,7 +59,7 @@ export class GitManagerView extends ItemView {
                 style: 'font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;'
             }
         });
-        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.2.4` });
+        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.2.5` });
         debugInfoEl.createEl('div', { text: `Manifest Version: ${manifestData?.version || 'UNKNOWN'}` });
         debugInfoEl.createEl('div', { text: `Plugin ID: ${manifestData?.id || 'UNKNOWN'}` });
         debugInfoEl.createEl('div', { text: `Plugin Name: ${manifestData?.name || 'UNKNOWN'}` });
@@ -76,7 +76,7 @@ export class GitManagerView extends ItemView {
         
         // Check plugin directory
         const allPlugins = (this.app as any).plugins?.manifests || {};
-        const ourPlugin = allPlugins['obsidian-multi-git'];
+        const ourPlugin = allPlugins['obsidian-multi-git-plugin'];
         locationInfoEl.createEl('div', { text: `Plugin in manifests: ${ourPlugin ? 'YES' : 'NO'}` });
         if (ourPlugin) {
             locationInfoEl.createEl('div', { text: `Manifest Name: ${ourPlugin.name}` });
@@ -98,13 +98,13 @@ export class GitManagerView extends ItemView {
             // Force reload this plugin
             try {
                 const plugins = (this.app as any).plugins;
-                await plugins.disablePlugin('obsidian-multi-git');
+                await plugins.disablePlugin('obsidian-multi-git-plugin');
                 await new Promise(r => setTimeout(r, 1000));
-                await plugins.enablePlugin('obsidian-multi-git');
+                await plugins.enablePlugin('obsidian-multi-git-plugin');
                 await new Promise(r => setTimeout(r, 1000));
                 
                 this.plugin.app.setting.open();
-                this.plugin.app.setting.openTabById('obsidian-multi-git');
+                this.plugin.app.setting.openTabById('obsidian-multi-git-plugin');
             } catch (error) {
                 console.error('Plugin reload error:', error);
             }
