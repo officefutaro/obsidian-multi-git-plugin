@@ -315,3 +315,31 @@
     background: var(--interactive-accent);
     color: var(--text-on-accent);
 }
+
+/* Loading state for buttons */
+.git-control-button button.is-loading,
+.git-action-button button.is-loading {
+    opacity: 0.7;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: not-allowed;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.git-control-button button:disabled,
+.git-action-button button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.7;
+    }
+}

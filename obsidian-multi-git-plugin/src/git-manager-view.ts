@@ -8,6 +8,9 @@ export const GIT_MANAGER_VIEW_TYPE = 'git-manager-view';
 export class GitManagerView extends ItemView {
     plugin: MultiGitPlugin;
     refreshButton: ButtonComponent;
+    commitAllButton: ButtonComponent;
+    pushAllButton: ButtonComponent;
+    pullAllButton: ButtonComponent;
     repositoryContainer: HTMLElement;
 
     constructor(leaf: WorkspaceLeaf, plugin: MultiGitPlugin) {
@@ -49,20 +52,53 @@ export class GitManagerView extends ItemView {
         // Global Actions
         const globalActionsEl = controlsEl.createEl('div', { cls: 'git-global-actions' });
         
-        new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
+        this.commitAllButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
             .setButtonText('📝 Commit All')
             .setTooltip('Commit changes to all repositories')
-            .onClick(() => this.plugin.showCommitModal());
+            .onClick(async () => {
+                this.commitAllButton.setButtonText('⏳ Committing...');
+                this.commitAllButton.setDisabled(true);
+                this.commitAllButton.buttonEl.addClass('is-loading');
+                try {
+                    await this.plugin.showCommitModal();
+                } finally {
+                    this.commitAllButton.setButtonText('📝 Commit All');
+                    this.commitAllButton.setDisabled(false);
+                    this.commitAllButton.buttonEl.removeClass('is-loading');
+                }
+            });
 
-        new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
+        this.pushAllButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
             .setButtonText('⬆️ Push All')
             .setTooltip('Push all repositories')
-            .onClick(() => this.plugin.gitPush());
+            .onClick(async () => {
+                this.pushAllButton.setButtonText('⏳ Pushing...');
+                this.pushAllButton.setDisabled(true);
+                this.pushAllButton.buttonEl.addClass('is-loading');
+                try {
+                    await this.plugin.gitPush();
+                } finally {
+                    this.pushAllButton.setButtonText('⬆️ Push All');
+                    this.pushAllButton.setDisabled(false);
+                    this.pushAllButton.buttonEl.removeClass('is-loading');
+                }
+            });
 
-        new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
+        this.pullAllButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
             .setButtonText('⬇️ Pull All')
             .setTooltip('Pull all repositories')
-            .onClick(() => this.plugin.gitPull());
+            .onClick(async () => {
+                this.pullAllButton.setButtonText('⏳ Pulling...');
+                this.pullAllButton.setDisabled(true);
+                this.pullAllButton.buttonEl.addClass('is-loading');
+                try {
+                    await this.plugin.gitPull();
+                } finally {
+                    this.pullAllButton.setButtonText('⬇️ Pull All');
+                    this.pullAllButton.setDisabled(false);
+                    this.pullAllButton.buttonEl.removeClass('is-loading');
+                }
+            });
 
         // Repository List Container
         this.repositoryContainer = container.createEl('div', { cls: 'git-repository-container' });
@@ -125,20 +161,53 @@ export class GitManagerView extends ItemView {
         // Repository Actions
         const actionsEl = repoEl.createEl('div', { cls: 'git-repo-actions' });
         
-        new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
+        const commitBtn = new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
             .setButtonText('📝 Commit')
             .setTooltip(`Commit changes in ${repo.name}`)
-            .onClick(() => this.commitRepository(repo));
+            .onClick(async () => {
+                commitBtn.setButtonText('⏳ Committing...');
+                commitBtn.setDisabled(true);
+                commitBtn.buttonEl.addClass('is-loading');
+                try {
+                    await this.commitRepository(repo);
+                } finally {
+                    commitBtn.setButtonText('📝 Commit');
+                    commitBtn.setDisabled(false);
+                    commitBtn.buttonEl.removeClass('is-loading');
+                }
+            });
 
-        new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
+        const pushBtn = new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
             .setButtonText('⬆️ Push')
             .setTooltip(`Push ${repo.name}`)
-            .onClick(() => this.pushRepository(repo));
+            .onClick(async () => {
+                pushBtn.setButtonText('⏳ Pushing...');
+                pushBtn.setDisabled(true);
+                pushBtn.buttonEl.addClass('is-loading');
+                try {
+                    await this.pushRepository(repo);
+                } finally {
+                    pushBtn.setButtonText('⬆️ Push');
+                    pushBtn.setDisabled(false);
+                    pushBtn.buttonEl.removeClass('is-loading');
+                }
+            });
 
-        new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
+        const pullBtn = new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
             .setButtonText('⬇️ Pull')
             .setTooltip(`Pull ${repo.name}`)
-            .onClick(() => this.pullRepository(repo));
+            .onClick(async () => {
+                pullBtn.setButtonText('⏳ Pulling...');
+                pullBtn.setDisabled(true);
+                pullBtn.buttonEl.addClass('is-loading');
+                try {
+                    await this.pullRepository(repo);
+                } finally {
+                    pullBtn.setButtonText('⬇️ Pull');
+                    pullBtn.setDisabled(false);
+                    pullBtn.buttonEl.removeClass('is-loading');
+                }
+            });
 
         // Load repository status
         this.loadRepositoryStatus(repo, statusEl);
