@@ -38,9 +38,27 @@ export class GitManagerView extends ItemView {
         container.empty();
         container.addClass('git-manager-view');
 
-        // Header Section
+        // Header Section  
         const headerEl = container.createEl('div', { cls: 'git-manager-header' });
-        headerEl.createEl('h2', { text: 'Git Repository Manager', cls: 'git-manager-title' });
+        headerEl.createEl('h2', { text: 'Git Repository Manager v1.1.4 🔥', cls: 'git-manager-title' });
+        
+        // URGENT UPDATE NOTICE - IMPOSSIBLE TO MISS
+        const urgentNotice = headerEl.createEl('div', { 
+            attr: { 
+                style: 'font-size: 1.3em; font-weight: bold; color: white; background: linear-gradient(45deg, red, orange); margin: 15px 0; padding: 15px; border-radius: 10px; border: 3px solid yellow; text-align: center; animation: blink 1s infinite;'
+            }
+        });
+        urgentNotice.innerHTML = '⚠️ CODE UPDATED TO v1.1.4 - IF YOU SEE THIS, NEW CODE IS RUNNING! ⚠️';
+        
+        // Add CSS animation
+        const style = container.createEl('style');
+        style.textContent = `
+            @keyframes blink {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
+        `;
         
         // FORCE VERSION DISPLAY - ALWAYS VISIBLE
         const forceVersionEl = headerEl.createEl('div', { 
@@ -48,7 +66,7 @@ export class GitManagerView extends ItemView {
                 style: 'font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);'
             }
         });
-        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.3 🚨' });
+        forceVersionEl.createEl('div', { text: '🚨 PLUGIN VERSION CHECK v1.1.4 🚨' });
         
         // Get actual plugin info from app
         const pluginInstance = (this.app as any).plugins?.plugins?.['obsidian-multi-git-plugin'];
@@ -59,7 +77,7 @@ export class GitManagerView extends ItemView {
                 style: 'font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;'
             }
         });
-        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.3` });
+        debugInfoEl.createEl('div', { text: `Expected Version: v1.1.4` });
         debugInfoEl.createEl('div', { text: `Manifest Version: ${manifestData?.version || 'UNKNOWN'}` });
         debugInfoEl.createEl('div', { text: `Plugin ID: ${manifestData?.id || 'UNKNOWN'}` });
         debugInfoEl.createEl('div', { text: `Plugin Name: ${manifestData?.name || 'UNKNOWN'}` });
