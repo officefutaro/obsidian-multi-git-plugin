@@ -134,24 +134,6 @@ export default class MultiGitPlugin extends Plugin {
         await this.updateStatusBar();
     }
 
-    async loadSettings() {
-        this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, await this.loadData());
-    }
-
-    async saveSettings() {
-        await this.saveData(this.automodeSettings);
-        if (this.automodeManager) {
-            this.automodeManager.onSettingsChanged();
-        }
-    }
-
-    async onunload() {
-        console.log('Unloading Multi Git Manager plugin');
-        if (this.automodeManager) {
-            this.automodeManager.destroy();
-        }
-    }
-
     async detectRepositories() {
         this.repositories = [];
         
@@ -231,11 +213,6 @@ export default class MultiGitPlugin extends Plugin {
     }
 
     async updateStatusBar() {
-        if (this.automodeManager) {
-            // Let automode manager handle status bar updates
-            return;
-        }
-
         let totalChanges = 0;
         for (const repo of this.repositories) {
             const status = await this.getGitStatus(repo.path);
@@ -508,6 +485,25 @@ class GitOperationModal extends Modal {
     }
 }
 
+    async loadSettings() {
+        this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.automodeSettings);
+        if (this.automodeManager) {
+            this.automodeManager.onSettingsChanged();
+        }
+    }
+
+    async onunload() {
+        console.log("Unloading Multi Git Manager plugin");
+        if (this.automodeManager) {
+            this.automodeManager.destroy();
+        }
+    }
+}
+
 class MultiGitSettingTab extends PluginSettingTab {
     plugin: MultiGitPlugin;
 
@@ -520,14 +516,14 @@ class MultiGitSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Multi Git Manager Settings' });
+        containerEl.createEl("h2", { text: "Multi Git Manager Settings" });
 
         // Automode section
-        containerEl.createEl('h3', { text: 'Automode Settings' });
+        containerEl.createEl("h3", { text: "Automode Settings" });
 
         new Setting(containerEl)
-            .setName('Enable Automode')
-            .setDesc('Automatically commit and push changes at regular intervals')
+            .setName("Enable Automode")
+            .setDesc("Automatically commit and push changes at regular intervals")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.automodeSettings.enabled)
                 .onChange(async (value) => {
@@ -541,8 +537,8 @@ class MultiGitSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Check Interval (seconds)')
-            .setDesc('How often to check for changes (5-3600 seconds)')
+            .setName("Check Interval (seconds)")
+            .setDesc("How often to check for changes (5-3600 seconds)")
             .addSlider(slider => slider
                 .setLimits(5, 3600, 5)
                 .setValue(this.plugin.automodeSettings.interval)
@@ -553,8 +549,8 @@ class MultiGitSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Auto Push')
-            .setDesc('Automatically push commits to remote repository')
+            .setName("Auto Push")
+            .setDesc("Automatically push commits to remote repository")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.automodeSettings.autoPush)
                 .onChange(async (value) => {
@@ -563,19 +559,19 @@ class MultiGitSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Commit Message Template')
-            .setDesc('Template for commit messages. Available variables: ${files}, ${fileCount}, ${repo}, ${timestamp}, ${date}, ${time}')
+            .setName("Commit Message Template")
+            .setDesc("Template for commit messages. Available variables: \, \, \, \, \, \")
             .addText(text => text
-                .setPlaceholder('${files}')
+                .setPlaceholder("\")
                 .setValue(this.plugin.automodeSettings.commitMessageTemplate)
                 .onChange(async (value) => {
-                    this.plugin.automodeSettings.commitMessageTemplate = value || '${files}';
+                    this.plugin.automodeSettings.commitMessageTemplate = value || "\";
                     await this.plugin.saveSettings();
                 }));
 
         new Setting(containerEl)
-            .setName('Show Notifications')
-            .setDesc('Show notifications when automode performs actions')
+            .setName("Show Notifications")
+            .setDesc("Show notifications when automode performs actions")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.automodeSettings.showNotifications)
                 .onChange(async (value) => {
@@ -584,8 +580,8 @@ class MultiGitSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Use Separate Branch')
-            .setDesc('Use a dedicated branch for automode commits')
+            .setName("Use Separate Branch")
+            .setDesc("Use a dedicated branch for automode commits")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.automodeSettings.useSeparateBranch)
                 .onChange(async (value) => {
@@ -594,19 +590,19 @@ class MultiGitSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Automode Branch Name')
-            .setDesc('Name of the branch used for automode commits')
+            .setName("Automode Branch Name")
+            .setDesc("Name of the branch used for automode commits")
             .addText(text => text
-                .setPlaceholder('automode')
+                .setPlaceholder("automode")
                 .setValue(this.plugin.automodeSettings.automodeBranchName)
                 .onChange(async (value) => {
-                    this.plugin.automodeSettings.automodeBranchName = value || 'automode';
+                    this.plugin.automodeSettings.automodeBranchName = value || "automode";
                     await this.plugin.saveSettings();
                 }));
 
         new Setting(containerEl)
-            .setName('Auto Switch to Main')
-            .setDesc('Automatically switch back to main branch when automode is disabled')
+            .setName("Auto Switch to Main")
+            .setDesc("Automatically switch back to main branch when automode is disabled")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.automodeSettings.autoSwitchToMain)
                 .onChange(async (value) => {

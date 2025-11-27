@@ -3,8 +3,22 @@ var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -50,10 +64,11 @@ var __async = (__this, __arguments, generator) => {
 // src/main.ts
 var main_exports = {};
 __export(main_exports, {
+  DEFAULT_AUTOMODE_SETTINGS: () => DEFAULT_AUTOMODE_SETTINGS,
   default: () => MultiGitPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 var import_child_process = require("child_process");
 var path = __toESM(require("path"));
 var import_util = require("util");
@@ -128,23 +143,32 @@ var GitManagerView = class extends import_obsidian.ItemView {
           }
         }), 0);
       });
+      const automodeEl = controlsEl.createEl("div", { cls: "git-automode-section" });
+      automodeEl.createEl("h3", { text: "Automode", cls: "git-automode-title" });
+      this.automodeStatusEl = automodeEl.createEl("div", { cls: "git-automode-status" });
+      this.updateAutomodeStatus();
+      const automodeControlsEl = automodeEl.createEl("div", { cls: "git-automode-controls" });
+      this.automodeToggleButton = new import_obsidian.ButtonComponent(automodeControlsEl.createEl("div", { cls: "git-control-button" })).setTooltip("Toggle Automode on/off").onClick(() => {
+        this.plugin.automodeManager.toggleAutomode();
+        this.updateAutomodeStatus();
+      });
+      this.automodeRunNowButton = new import_obsidian.ButtonComponent(automodeControlsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u26A1 Run Now").setTooltip("Run automode check immediately").onClick(() => {
+        this.automodeRunNowButton.setButtonText("\u23F3 Running...");
+        this.automodeRunNowButton.setDisabled(true);
+        this.automodeRunNowButton.buttonEl.addClass("is-loading");
+        setTimeout(() => __async(this, null, function* () {
+          try {
+            yield this.plugin.automodeManager.runNow();
+          } finally {
+            this.automodeRunNowButton.setButtonText("\u26A1 Run Now");
+            this.automodeRunNowButton.setDisabled(false);
+            this.automodeRunNowButton.buttonEl.removeClass("is-loading");
+            this.updateAutomodeStatus();
+          }
+        }), 0);
+      });
       this.repositoryContainer = container.createEl("div", { cls: "git-repository-container" });
       yield this.refreshView();
-    });
-  }
-  refreshView() {
-    return __async(this, null, function* () {
-      this.refreshButton.setButtonText("\u{1F504} Refreshing...");
-      this.refreshButton.setDisabled(true);
-      try {
-        yield this.plugin.detectRepositories();
-        yield this.renderRepositories();
-      } catch (error) {
-        new import_obsidian.Notice(`Error refreshing repositories: ${error}`);
-      } finally {
-        this.refreshButton.setButtonText("\u{1F504} Refresh");
-        this.refreshButton.setDisabled(false);
-      }
     });
   }
   renderRepositories() {
@@ -326,29 +350,360 @@ var GitManagerView = class extends import_obsidian.ItemView {
       }
     });
   }
+  updateAutomodeStatus() {
+    if (!this.automodeStatusEl || !this.automodeToggleButton) return;
+    const isEnabled = this.plugin.automodeManager.isEnabled;
+    const isActive = this.plugin.automodeManager.isActive;
+    if (isEnabled) {
+      this.automodeToggleButton.setButtonText("\u{1F916} Auto ON");
+      this.automodeToggleButton.buttonEl.removeClass("automode-off");
+      this.automodeToggleButton.buttonEl.addClass("automode-on");
+    } else {
+      this.automodeToggleButton.setButtonText("\u23F8\uFE0F Auto OFF");
+      this.automodeToggleButton.buttonEl.removeClass("automode-on");
+      this.automodeToggleButton.buttonEl.addClass("automode-off");
+    }
+    this.automodeStatusEl.empty();
+    if (!isEnabled) {
+      this.automodeStatusEl.createEl("div", {
+        text: "Automode is disabled",
+        cls: "automode-status-disabled"
+      });
+    } else if (isActive) {
+      const timeUntilNext = this.plugin.automodeManager.timeUntilNextRun;
+      const secondsLeft = Math.ceil(timeUntilNext / 1e3);
+      this.automodeStatusEl.createEl("div", {
+        text: `Automode active - Next run in ${secondsLeft}s`,
+        cls: "automode-status-active"
+      });
+      const settingsText = `Interval: ${this.plugin.automodeSettings.interval}s | Branch: ${this.plugin.automodeSettings.useSeparateBranch ? this.plugin.automodeSettings.automodeBranchName : "current"} | Push: ${this.plugin.automodeSettings.autoPush ? "enabled" : "disabled"}`;
+      this.automodeStatusEl.createEl("div", {
+        text: settingsText,
+        cls: "automode-status-details"
+      });
+    } else {
+      this.automodeStatusEl.createEl("div", {
+        text: "Automode enabled but not running",
+        cls: "automode-status-waiting"
+      });
+    }
+    if (isEnabled && isActive) {
+      setTimeout(() => this.updateAutomodeStatus(), 1e3);
+    }
+  }
+  refreshView() {
+    return __async(this, null, function* () {
+      this.refreshButton.setButtonText("\u{1F504} Refreshing...");
+      this.refreshButton.setDisabled(true);
+      try {
+        yield this.plugin.detectRepositories();
+        yield this.renderRepositories();
+        this.updateAutomodeStatus();
+      } catch (error) {
+        new import_obsidian.Notice(`Error refreshing repositories: ${error}`);
+      } finally {
+        this.refreshButton.setButtonText("\u{1F504} Refresh");
+        this.refreshButton.setDisabled(false);
+      }
+    });
+  }
   onClose() {
     return __async(this, null, function* () {
     });
   }
 };
 
+// src/automode-manager.ts
+var import_obsidian2 = require("obsidian");
+var AutomodeManager = class {
+  constructor(plugin) {
+    this.automodeTimer = null;
+    this.isRunning = false;
+    this.nextRunTime = 0;
+    this.plugin = plugin;
+  }
+  get isEnabled() {
+    return this.plugin.automodeSettings.enabled;
+  }
+  get isActive() {
+    return this.automodeTimer !== null;
+  }
+  get timeUntilNextRun() {
+    if (!this.isActive) return 0;
+    return Math.max(0, this.nextRunTime - Date.now());
+  }
+  startAutomode() {
+    if (this.automodeTimer) {
+      this.stopAutomode();
+    }
+    const intervalMs = this.plugin.automodeSettings.interval * 1e3;
+    this.automodeTimer = setInterval(() => {
+      this.executeAutomodeCheck();
+    }, intervalMs);
+    this.nextRunTime = Date.now() + intervalMs;
+    this.updateStatusBar();
+    if (this.plugin.automodeSettings.showNotifications) {
+      new import_obsidian2.Notice(`\u{1F916} Automode started (${this.plugin.automodeSettings.interval}s interval)`);
+    }
+    console.log("Automode started with interval:", this.plugin.automodeSettings.interval, "seconds");
+  }
+  stopAutomode() {
+    if (this.automodeTimer) {
+      clearInterval(this.automodeTimer);
+      this.automodeTimer = null;
+    }
+    this.nextRunTime = 0;
+    this.updateStatusBar();
+    if (this.plugin.automodeSettings.showNotifications) {
+      new import_obsidian2.Notice("\u23F8\uFE0F Automode stopped");
+    }
+    console.log("Automode stopped");
+  }
+  toggleAutomode() {
+    this.plugin.automodeSettings.enabled = !this.plugin.automodeSettings.enabled;
+    if (this.plugin.automodeSettings.enabled) {
+      this.startAutomode();
+    } else {
+      this.stopAutomode();
+      if (this.plugin.automodeSettings.autoSwitchToMain) {
+        this.switchAllReposToMain();
+      }
+    }
+    this.plugin.saveSettings();
+  }
+  runNow() {
+    return __async(this, null, function* () {
+      if (this.isRunning) {
+        new import_obsidian2.Notice("Automode is already running...");
+        return;
+      }
+      yield this.executeAutomodeCheck();
+    });
+  }
+  executeAutomodeCheck() {
+    return __async(this, null, function* () {
+      if (this.isRunning) {
+        console.log("Automode check skipped - already running");
+        return;
+      }
+      this.isRunning = true;
+      this.updateStatusBar();
+      try {
+        let processedCount = 0;
+        for (const repo of this.plugin.repositories) {
+          if (this.plugin.automodeSettings.excludeRepositories.includes(repo.path)) {
+            continue;
+          }
+          const hasChanges = yield this.detectChanges(repo);
+          if (hasChanges) {
+            yield this.executeAutoCommit(repo);
+            processedCount++;
+          }
+        }
+        if (processedCount > 0 && this.plugin.automodeSettings.showNotifications) {
+          new import_obsidian2.Notice(`\u2705 Auto-committed changes in ${processedCount} repositories`);
+        }
+      } catch (error) {
+        console.error("Automode execution error:", error);
+        if (this.plugin.automodeSettings.showNotifications) {
+          new import_obsidian2.Notice(`\u274C Automode error: ${error.message}`);
+        }
+      } finally {
+        this.isRunning = false;
+        this.nextRunTime = Date.now() + this.plugin.automodeSettings.interval * 1e3;
+        this.updateStatusBar();
+      }
+    });
+  }
+  detectChanges(repo) {
+    return __async(this, null, function* () {
+      try {
+        const status = yield this.plugin.getGitStatus(repo.path);
+        return status.modified.length > 0 || status.added.length > 0 || status.deleted.length > 0 || status.untracked.length > 0;
+      } catch (error) {
+        console.error(`Failed to detect changes in ${repo.path}:`, error);
+        return false;
+      }
+    });
+  }
+  executeAutoCommit(repo) {
+    return __async(this, null, function* () {
+      try {
+        if (this.plugin.automodeSettings.useSeparateBranch) {
+          yield this.ensureAutomodeBranch(repo);
+        }
+        yield this.plugin.executeGitCommand(repo.path, "add .");
+        const message = yield this.generateCommitMessage(repo);
+        yield this.plugin.executeGitCommand(repo.path, `commit -m "${message}"`);
+        if (this.plugin.automodeSettings.autoPush) {
+          const pushBranch = this.plugin.automodeSettings.useSeparateBranch ? this.plugin.automodeSettings.automodeBranchName : yield this.getCurrentBranch(repo.path);
+          yield this.plugin.executeGitCommand(repo.path, `push origin ${pushBranch}`);
+        }
+        console.log(`Auto-committed changes in ${repo.name}: ${message}`);
+      } catch (error) {
+        console.error(`Failed to auto-commit in ${repo.path}:`, error);
+        if (error.message.includes("CONFLICT")) {
+          if (this.plugin.automodeSettings.showNotifications) {
+            new import_obsidian2.Notice(`\u{1F6D1} Automode stopped due to conflict in ${repo.name}`);
+          }
+          this.stopAutomode();
+        }
+        throw error;
+      }
+    });
+  }
+  ensureAutomodeBranch(repo) {
+    return __async(this, null, function* () {
+      const currentBranch = yield this.getCurrentBranch(repo.path);
+      const automodeBranch = this.plugin.automodeSettings.automodeBranchName;
+      if (currentBranch !== automodeBranch) {
+        try {
+          const branches = yield this.plugin.executeGitCommand(repo.path, "branch -a");
+          const branchExists = branches.includes(automodeBranch) || branches.includes(`remotes/origin/${automodeBranch}`);
+          if (!branchExists) {
+            yield this.plugin.executeGitCommand(repo.path, `checkout -b ${automodeBranch}`);
+          } else {
+            yield this.plugin.executeGitCommand(repo.path, `checkout ${automodeBranch}`);
+          }
+        } catch (error) {
+          console.error(`Failed to switch to automode branch in ${repo.path}:`, error);
+          throw error;
+        }
+      }
+    });
+  }
+  switchAllReposToMain() {
+    return __async(this, null, function* () {
+      for (const repo of this.plugin.repositories) {
+        try {
+          yield this.switchToMainBranch(repo);
+        } catch (error) {
+          console.error(`Failed to switch ${repo.path} to main branch:`, error);
+        }
+      }
+    });
+  }
+  switchToMainBranch(repo) {
+    return __async(this, null, function* () {
+      try {
+        const mainBranch = yield this.getMainBranchName(repo.path);
+        const currentBranch = yield this.getCurrentBranch(repo.path);
+        if (currentBranch !== mainBranch) {
+          yield this.plugin.executeGitCommand(repo.path, `checkout ${mainBranch}`);
+        }
+      } catch (error) {
+        console.error(`Failed to switch to main branch in ${repo.path}:`, error);
+        throw error;
+      }
+    });
+  }
+  getCurrentBranch(repoPath) {
+    return __async(this, null, function* () {
+      const result = yield this.plugin.executeGitCommand(repoPath, "branch --show-current");
+      return result.trim();
+    });
+  }
+  getMainBranchName(repoPath) {
+    return __async(this, null, function* () {
+      try {
+        const result = yield this.plugin.executeGitCommand(repoPath, "symbolic-ref refs/remotes/origin/HEAD");
+        return result.replace("refs/remotes/origin/", "").trim();
+      } catch (e) {
+        try {
+          yield this.plugin.executeGitCommand(repoPath, "rev-parse --verify main");
+          return "main";
+        } catch (e2) {
+          try {
+            yield this.plugin.executeGitCommand(repoPath, "rev-parse --verify master");
+            return "master";
+          } catch (e3) {
+            throw new Error("Could not determine main branch name");
+          }
+        }
+      }
+    });
+  }
+  generateCommitMessage(repo) {
+    return __async(this, null, function* () {
+      const status = yield this.plugin.getGitStatus(repo.path);
+      const changedFiles = [
+        ...status.modified,
+        ...status.added,
+        ...status.deleted,
+        ...status.untracked
+      ];
+      const fileNames = changedFiles.map(
+        (file) => file.split("/").pop() || file
+      ).filter(Boolean);
+      const template = this.plugin.automodeSettings.commitMessageTemplate;
+      const now = /* @__PURE__ */ new Date();
+      return template.replace("${files}", fileNames.join(", ")).replace("${fileCount}", fileNames.length.toString()).replace("${repo}", repo.name).replace("${timestamp}", now.toISOString()).replace("${date}", now.toISOString().split("T")[0]).replace("${time}", now.toTimeString().split(" ")[0]);
+    });
+  }
+  updateStatusBar() {
+    if (!this.plugin.statusBarItem) return;
+    if (!this.isEnabled) {
+      this.plugin.statusBarItem.setText("Git: Auto OFF");
+    } else if (this.isRunning) {
+      this.plugin.statusBarItem.setText("Git: Auto Running...");
+    } else if (this.isActive) {
+      const secondsLeft = Math.ceil(this.timeUntilNextRun / 1e3);
+      this.plugin.statusBarItem.setText(`Git: Auto ON (${secondsLeft}s)`);
+      setTimeout(() => {
+        if (this.isActive && !this.isRunning) {
+          this.updateStatusBar();
+        }
+      }, 1e3);
+    } else {
+      this.plugin.statusBarItem.setText("Git: Auto OFF");
+    }
+  }
+  onSettingsChanged() {
+    if (this.isActive && this.isEnabled) {
+      this.stopAutomode();
+      this.startAutomode();
+    }
+  }
+  destroy() {
+    this.stopAutomode();
+  }
+};
+
 // src/main.ts
 var execAsync = (0, import_util.promisify)(import_child_process.exec);
-var MultiGitPlugin = class extends import_obsidian2.Plugin {
+var DEFAULT_AUTOMODE_SETTINGS = {
+  enabled: false,
+  interval: 30,
+  autoPush: true,
+  commitMessageTemplate: "${files}",
+  showNotifications: true,
+  excludeRepositories: [],
+  useSeparateBranch: true,
+  automodeBranchName: "automode",
+  autoSwitchToMain: true
+};
+var MultiGitPlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
     this.repositories = [];
+    this.automodeSettings = __spreadValues({}, DEFAULT_AUTOMODE_SETTINGS);
   }
   onload() {
     return __async(this, null, function* () {
       console.log("Loading Multi Git Manager plugin");
+      yield this.loadSettings();
+      this.automodeManager = new AutomodeManager(this);
       this.registerView(
         GIT_MANAGER_VIEW_TYPE,
         (leaf) => new GitManagerView(leaf, this)
       );
+      this.addSettingTab(new MultiGitSettingTab(this.app, this));
       this.statusBarItem = this.addStatusBarItem();
       this.statusBarItem.setText("Git: Initializing...");
       yield this.detectRepositories();
+      if (this.automodeSettings.enabled) {
+        this.automodeManager.startAutomode();
+      }
       this.addCommand({
         id: "show-git-status",
         name: "Show Git Status",
@@ -374,6 +729,16 @@ var MultiGitPlugin = class extends import_obsidian2.Plugin {
         name: "Open Git Manager",
         callback: () => this.openGitManagerView()
       });
+      this.addCommand({
+        id: "toggle-automode",
+        name: "Toggle Automode",
+        callback: () => this.automodeManager.toggleAutomode()
+      });
+      this.addCommand({
+        id: "run-automode-now",
+        name: "Run Automode Now",
+        callback: () => this.automodeManager.runNow()
+      });
       this.addRibbonIcon("git-branch", "Git Manager View", () => {
         this.openGitManagerView();
       });
@@ -381,6 +746,27 @@ var MultiGitPlugin = class extends import_obsidian2.Plugin {
         window.setInterval(() => this.updateStatusBar(), 3e4)
       );
       yield this.updateStatusBar();
+    });
+  }
+  loadSettings() {
+    return __async(this, null, function* () {
+      this.automodeSettings = Object.assign({}, DEFAULT_AUTOMODE_SETTINGS, yield this.loadData());
+    });
+  }
+  saveSettings() {
+    return __async(this, null, function* () {
+      yield this.saveData(this.automodeSettings);
+      if (this.automodeManager) {
+        this.automodeManager.onSettingsChanged();
+      }
+    });
+  }
+  onunload() {
+    return __async(this, null, function* () {
+      console.log("Unloading Multi Git Manager plugin");
+      if (this.automodeManager) {
+        this.automodeManager.destroy();
+      }
     });
   }
   detectRepositories() {
@@ -449,6 +835,9 @@ var MultiGitPlugin = class extends import_obsidian2.Plugin {
   }
   updateStatusBar() {
     return __async(this, null, function* () {
+      if (this.automodeManager) {
+        return;
+      }
       let totalChanges = 0;
       for (const repo of this.repositories) {
         const status = yield this.getGitStatus(repo.path);
@@ -505,7 +894,7 @@ var MultiGitPlugin = class extends import_obsidian2.Plugin {
     });
   }
 };
-var GitStatusModal = class extends import_obsidian2.Modal {
+var GitStatusModal = class extends import_obsidian3.Modal {
   constructor(app, plugin) {
     super(app);
     this.plugin = plugin;
@@ -558,7 +947,7 @@ var GitStatusModal = class extends import_obsidian2.Modal {
     });
   }
 };
-var GitCommitModal = class extends import_obsidian2.Modal {
+var GitCommitModal = class extends import_obsidian3.Modal {
   constructor(app, plugin) {
     super(app);
     this.selectedRepos = /* @__PURE__ */ new Set();
@@ -575,7 +964,7 @@ var GitCommitModal = class extends import_obsidian2.Modal {
         const status = yield this.plugin.getGitStatus(repo.path);
         const totalChanges = status.modified.length + status.added.length + status.deleted.length + status.untracked.length;
         if (totalChanges > 0) {
-          new import_obsidian2.Setting(repoSection).setName(`${repo.name} ${repo.isParent ? "(Parent)" : ""} - ${totalChanges} changes`).addToggle((toggle) => {
+          new import_obsidian3.Setting(repoSection).setName(`${repo.name} ${repo.isParent ? "(Parent)" : ""} - ${totalChanges} changes`).addToggle((toggle) => {
             toggle.onChange((value) => {
               if (value) {
                 this.selectedRepos.add(repo.path);
@@ -603,11 +992,11 @@ var GitCommitModal = class extends import_obsidian2.Modal {
         var _a;
         const message = messageInput.value.trim();
         if (!message) {
-          new import_obsidian2.Notice("Please enter a commit message");
+          new import_obsidian3.Notice("Please enter a commit message");
           return;
         }
         if (this.selectedRepos.size === 0) {
-          new import_obsidian2.Notice("Please select at least one repository");
+          new import_obsidian3.Notice("Please select at least one repository");
           return;
         }
         for (const repoPath of this.selectedRepos) {
@@ -615,9 +1004,9 @@ var GitCommitModal = class extends import_obsidian2.Modal {
             yield this.plugin.executeGitCommand(repoPath, "add .");
             yield this.plugin.executeGitCommand(repoPath, `commit -m "${message.replace(/"/g, '\\"')}"`);
             const repoName = ((_a = this.plugin.repositories.find((r) => r.path === repoPath)) == null ? void 0 : _a.name) || "Repository";
-            new import_obsidian2.Notice(`\u2713 Committed to ${repoName}`);
+            new import_obsidian3.Notice(`\u2713 Committed to ${repoName}`);
           } catch (error) {
-            new import_obsidian2.Notice(`\u2717 Error committing to repository: ${error}`);
+            new import_obsidian3.Notice(`\u2717 Error committing to repository: ${error}`);
           }
         }
         this.plugin.updateStatusBar();
@@ -628,7 +1017,7 @@ var GitCommitModal = class extends import_obsidian2.Modal {
     });
   }
 };
-var GitOperationModal = class extends import_obsidian2.Modal {
+var GitOperationModal = class extends import_obsidian3.Modal {
   constructor(app, plugin, operation) {
     super(app);
     this.selectedRepos = /* @__PURE__ */ new Set();
@@ -643,7 +1032,7 @@ var GitOperationModal = class extends import_obsidian2.Modal {
       const repoSection = contentEl.createDiv({ cls: "git-repo-selection" });
       repoSection.createEl("h3", { text: "Select Repositories:" });
       for (const repo of this.plugin.repositories) {
-        new import_obsidian2.Setting(repoSection).setName(`${repo.name} ${repo.isParent ? "(Parent)" : ""}`).addToggle((toggle) => {
+        new import_obsidian3.Setting(repoSection).setName(`${repo.name} ${repo.isParent ? "(Parent)" : ""}`).addToggle((toggle) => {
           toggle.onChange((value) => {
             if (value) {
               this.selectedRepos.add(repo.path);
@@ -663,16 +1052,16 @@ var GitOperationModal = class extends import_obsidian2.Modal {
       executeBtn.onclick = () => __async(this, null, function* () {
         var _a;
         if (this.selectedRepos.size === 0) {
-          new import_obsidian2.Notice("Please select at least one repository");
+          new import_obsidian3.Notice("Please select at least one repository");
           return;
         }
         for (const repoPath of this.selectedRepos) {
           try {
             const result = yield this.plugin.executeGitCommand(repoPath, this.operation);
             const repoName = ((_a = this.plugin.repositories.find((r) => r.path === repoPath)) == null ? void 0 : _a.name) || "Repository";
-            new import_obsidian2.Notice(`\u2713 ${this.operation} completed for ${repoName}`);
+            new import_obsidian3.Notice(`\u2713 ${this.operation} completed for ${repoName}`);
           } catch (error) {
-            new import_obsidian2.Notice(`\u2717 Error during ${this.operation}: ${error}`);
+            new import_obsidian3.Notice(`\u2717 Error during ${this.operation}: ${error}`);
           }
         }
         this.plugin.updateStatusBar();
@@ -683,3 +1072,56 @@ var GitOperationModal = class extends import_obsidian2.Modal {
     });
   }
 };
+var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.createEl("h2", { text: "Multi Git Manager Settings" });
+    containerEl.createEl("h3", { text: "Automode Settings" });
+    new import_obsidian3.Setting(containerEl).setName("Enable Automode").setDesc("Automatically commit and push changes at regular intervals").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enabled).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.enabled = value;
+      yield this.plugin.saveSettings();
+      if (value) {
+        this.plugin.automodeManager.startAutomode();
+      } else {
+        this.plugin.automodeManager.stopAutomode();
+      }
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Check Interval (seconds)").setDesc("How often to check for changes (5-3600 seconds)").addSlider((slider) => slider.setLimits(5, 3600, 5).setValue(this.plugin.automodeSettings.interval).setDynamicTooltip().onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.interval = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Auto Push").setDesc("Automatically push commits to remote repository").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.autoPush).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.autoPush = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Commit Message Template").setDesc("Template for commit messages. Available variables: ${files}, ${fileCount}, ${repo}, ${timestamp}, ${date}, ${time}").addText((text) => text.setPlaceholder("${files}").setValue(this.plugin.automodeSettings.commitMessageTemplate).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.commitMessageTemplate = value || "${files}";
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Show Notifications").setDesc("Show notifications when automode performs actions").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.showNotifications).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.showNotifications = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Use Separate Branch").setDesc("Use a dedicated branch for automode commits").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.useSeparateBranch).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.useSeparateBranch = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Automode Branch Name").setDesc("Name of the branch used for automode commits").addText((text) => text.setPlaceholder("automode").setValue(this.plugin.automodeSettings.automodeBranchName).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.automodeBranchName = value || "automode";
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Auto Switch to Main").setDesc("Automatically switch back to main branch when automode is disabled").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.autoSwitchToMain).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.autoSwitchToMain = value;
+      yield this.plugin.saveSettings();
+    })));
+  }
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  DEFAULT_AUTOMODE_SETTINGS
+});

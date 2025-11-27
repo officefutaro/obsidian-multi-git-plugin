@@ -11,6 +11,9 @@ export class GitManagerView extends ItemView {
     commitAllButton: ButtonComponent;
     pushAllButton: ButtonComponent;
     pullAllButton: ButtonComponent;
+    automodeToggleButton: ButtonComponent;
+    automodeRunNowButton: ButtonComponent;
+    automodeStatusEl: HTMLElement;
     repositoryContainer: HTMLElement;
 
     constructor(leaf: WorkspaceLeaf, plugin: MultiGitPlugin) {
@@ -113,26 +116,49 @@ export class GitManagerView extends ItemView {
                 }, 0);
             });
 
+        // Automode Controls
+        const automodeEl = controlsEl.createEl('div', { cls: 'git-automode-section' });
+        automodeEl.createEl('h3', { text: 'Automode', cls: 'git-automode-title' });
+        
+        // Automode Status
+        this.automodeStatusEl = automodeEl.createEl('div', { cls: 'git-automode-status' });
+        this.updateAutomodeStatus();
+        
+        // Automode Controls
+        const automodeControlsEl = automodeEl.createEl('div', { cls: 'git-automode-controls' });
+        
+        this.automodeToggleButton = new ButtonComponent(automodeControlsEl.createEl('div', { cls: 'git-control-button' }))
+            .setTooltip('Toggle Automode on/off')
+            .onClick(() => {
+                this.plugin.automodeManager.toggleAutomode();
+                this.updateAutomodeStatus();
+            });
+
+        this.automodeRunNowButton = new ButtonComponent(automodeControlsEl.createEl('div', { cls: 'git-control-button' }))
+            .setButtonText('⚡ Run Now')
+            .setTooltip('Run automode check immediately')
+            .onClick(() => {
+                this.automodeRunNowButton.setButtonText('⏳ Running...');
+                this.automodeRunNowButton.setDisabled(true);
+                this.automodeRunNowButton.buttonEl.addClass('is-loading');
+                
+                setTimeout(async () => {
+                    try {
+                        await this.plugin.automodeManager.runNow();
+                    } finally {
+                        this.automodeRunNowButton.setButtonText('⚡ Run Now');
+                        this.automodeRunNowButton.setDisabled(false);
+                        this.automodeRunNowButton.buttonEl.removeClass('is-loading');
+                        this.updateAutomodeStatus();
+                    }
+                }, 0);
+            });
+
         // Repository List Container
         this.repositoryContainer = container.createEl('div', { cls: 'git-repository-container' });
 
         // Initial load
         await this.refreshView();
-    }
-
-    async refreshView() {
-        this.refreshButton.setButtonText('🔄 Refreshing...');
-        this.refreshButton.setDisabled(true);
-
-        try {
-            await this.plugin.detectRepositories();
-            await this.renderRepositories();
-        } catch (error) {
-            new Notice(`Error refreshing repositories: ${error}`);
-        } finally {
-            this.refreshButton.setButtonText('🔄 Refresh');
-            this.refreshButton.setDisabled(false);
-        }
     }
 
     async renderRepositories() {
@@ -352,6 +378,77 @@ export class GitManagerView extends ItemView {
             this.refreshView();
         } catch (error) {
             new Notice(`❌ Pull failed: ${error}`);
+        }
+    }
+
+    updateAutomodeStatus() {
+        if (!this.automodeStatusEl || !this.automodeToggleButton) return;
+
+        const isEnabled = this.plugin.automodeManager.isEnabled;
+        const isActive = this.plugin.automodeManager.isActive;
+        
+        // Update toggle button
+        if (isEnabled) {
+            this.automodeToggleButton.setButtonText('🤖 Auto ON');
+            this.automodeToggleButton.buttonEl.removeClass('automode-off');
+            this.automodeToggleButton.buttonEl.addClass('automode-on');
+        } else {
+            this.automodeToggleButton.setButtonText('⏸️ Auto OFF');
+            this.automodeToggleButton.buttonEl.removeClass('automode-on');
+            this.automodeToggleButton.buttonEl.addClass('automode-off');
+        }
+
+        // Update status text
+        this.automodeStatusEl.empty();
+        
+        if (!isEnabled) {
+            this.automodeStatusEl.createEl('div', { 
+                text: 'Automode is disabled', 
+                cls: 'automode-status-disabled' 
+            });
+        } else if (isActive) {
+            const timeUntilNext = this.plugin.automodeManager.timeUntilNextRun;
+            const secondsLeft = Math.ceil(timeUntilNext / 1000);
+            
+            this.automodeStatusEl.createEl('div', { 
+                text: `Automode active - Next run in ${secondsLeft}s`, 
+                cls: 'automode-status-active' 
+            });
+            
+            const settingsText = `Interval: ${this.plugin.automodeSettings.interval}s | ` +
+                               `Branch: ${this.plugin.automodeSettings.useSeparateBranch ? this.plugin.automodeSettings.automodeBranchName : 'current'} | ` +
+                               `Push: ${this.plugin.automodeSettings.autoPush ? 'enabled' : 'disabled'}`;
+            
+            this.automodeStatusEl.createEl('div', { 
+                text: settingsText, 
+                cls: 'automode-status-details' 
+            });
+        } else {
+            this.automodeStatusEl.createEl('div', { 
+                text: 'Automode enabled but not running', 
+                cls: 'automode-status-waiting' 
+            });
+        }
+
+        // Schedule next update if active
+        if (isEnabled && isActive) {
+            setTimeout(() => this.updateAutomodeStatus(), 1000);
+        }
+    }
+
+    async refreshView() {
+        this.refreshButton.setButtonText('🔄 Refreshing...');
+        this.refreshButton.setDisabled(true);
+
+        try {
+            await this.plugin.detectRepositories();
+            await this.renderRepositories();
+            this.updateAutomodeStatus(); // Update automode status when refreshing
+        } catch (error) {
+            new Notice(`Error refreshing repositories: ${error}`);
+        } finally {
+            this.refreshButton.setButtonText('🔄 Refresh');
+            this.refreshButton.setDisabled(false);
         }
     }
 

@@ -343,3 +343,72 @@
         opacity: 0.7;
     }
 }
+
+/* Automode Section */
+.git-automode-section {
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+}
+
+.git-automode-title {
+    margin: 0 0 12px 0;
+    font-size: 1.1em;
+    color: var(--text-accent);
+    font-weight: bold;
+}
+
+.git-automode-status {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: var(--background-primary);
+    border-radius: 4px;
+}
+
+.git-automode-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.automode-status-disabled {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.automode-status-active {
+    color: var(--text-success);
+    font-weight: 500;
+}
+
+.automode-status-waiting {
+    color: var(--text-warning);
+}
+
+.automode-status-details {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Automode Button States */
+.git-control-button button.automode-on {
+    background: var(--color-green);
+    color: white;
+}
+
+.git-control-button button.automode-off {
+    background: var(--interactive-normal);
+    color: var(--text-normal);
+}
+
+.git-control-button button.automode-on:hover {
+    background: var(--color-green);
+    opacity: 0.8;
+}
+
+.git-control-button button.automode-off:hover {
+    background: var(--interactive-hover);
+}
