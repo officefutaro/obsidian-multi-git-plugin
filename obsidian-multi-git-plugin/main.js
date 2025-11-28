@@ -93,86 +93,14 @@ var GitManagerView = class extends import_obsidian.ItemView {
   }
   onOpen() {
     return __async(this, null, function* () {
-      var _a, _b, _c;
       const container = this.containerEl.children[1];
       container.empty();
       container.addClass("git-manager-view");
       const headerEl = container.createEl("div", { cls: "git-manager-header" });
-      headerEl.createEl("h2", { text: `Git Repository Manager v${this.plugin.manifest.version} \u{1F525}`, cls: "git-manager-title" });
-      const urgentNotice = headerEl.createEl("div", {
-        attr: {
-          style: "font-size: 1.3em; font-weight: bold; color: white; background: linear-gradient(45deg, red, orange); margin: 15px 0; padding: 15px; border-radius: 10px; border: 3px solid yellow; text-align: center; animation: blink 1s infinite;"
-        }
-      });
-      urgentNotice.innerHTML = `\u26A0\uFE0F CODE UPDATED TO v${this.plugin.manifest.version} - IF YOU SEE THIS, NEW CODE IS RUNNING! \u26A0\uFE0F`;
-      const style = container.createEl("style");
-      style.textContent = `
-            @keyframes blink {
-                0% { opacity: 1; }
-                50% { opacity: 0.5; }
-                100% { opacity: 1; }
-            }
-        `;
-      const forceVersionEl = headerEl.createEl("div", {
-        attr: {
-          style: "font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);"
-        }
-      });
-      forceVersionEl.createEl("div", { text: `\u{1F6A8} PLUGIN VERSION CHECK v${this.plugin.manifest.version} \u{1F6A8}` });
-      const pluginInstance = (_b = (_a = this.app.plugins) == null ? void 0 : _a.plugins) == null ? void 0 : _b["obsidian-multi-git-plugin"];
-      const manifestData = pluginInstance == null ? void 0 : pluginInstance.manifest;
-      const debugInfoEl = headerEl.createEl("div", {
-        attr: {
-          style: "font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;"
-        }
-      });
-      debugInfoEl.createEl("div", { text: `Expected Version: v${this.plugin.manifest.version}` });
-      debugInfoEl.createEl("div", { text: `Manifest Version: ${(manifestData == null ? void 0 : manifestData.version) || "UNKNOWN"}` });
-      debugInfoEl.createEl("div", { text: `Plugin ID: ${(manifestData == null ? void 0 : manifestData.id) || "UNKNOWN"}` });
-      debugInfoEl.createEl("div", { text: `Plugin Name: ${(manifestData == null ? void 0 : manifestData.name) || "UNKNOWN"}` });
-      debugInfoEl.createEl("div", { text: `Plugin Found: ${pluginInstance ? "YES" : "NO"}` });
-      debugInfoEl.createEl("div", { text: `Settings Object: ${this.plugin.automodeSettings ? "EXISTS" : "MISSING"}` });
-      debugInfoEl.createEl("div", { text: `Current Time: ${(/* @__PURE__ */ new Date()).toLocaleString()}` });
-      const locationInfoEl = headerEl.createEl("div", {
-        attr: {
-          style: "font-size: 0.8em; margin: 5px 0; padding: 8px; background: var(--background-modifier-error); border-radius: 3px; color: var(--text-error);"
-        }
-      });
-      const allPlugins = ((_c = this.app.plugins) == null ? void 0 : _c.manifests) || {};
-      const ourPlugin = allPlugins["obsidian-multi-git-plugin"];
-      locationInfoEl.createEl("div", { text: `Plugin in manifests: ${ourPlugin ? "YES" : "NO"}` });
-      if (ourPlugin) {
-        locationInfoEl.createEl("div", { text: `Manifest Name: ${ourPlugin.name}` });
-        locationInfoEl.createEl("div", { text: `Manifest Version: ${ourPlugin.version}` });
-      }
-      const similarPlugins = Object.keys(allPlugins).filter((id) => {
-        var _a2;
-        return id.includes("git") || ((_a2 = allPlugins[id].name) == null ? void 0 : _a2.toLowerCase().includes("git"));
-      });
-      locationInfoEl.createEl("div", { text: `Git-related plugins: ${similarPlugins.join(", ")}` });
-      const diagButton = headerEl.createEl("button", {
-        text: "\u{1F50D} Force Plugin Reload + Settings",
-        attr: {
-          style: "margin-top: 10px; padding: 5px 10px; background: var(--color-red); color: white; border: none; border-radius: 3px; cursor: pointer;"
-        }
-      });
-      diagButton.onclick = () => __async(this, null, function* () {
-        try {
-          const plugins = this.app.plugins;
-          yield plugins.disablePlugin("obsidian-multi-git-plugin");
-          yield new Promise((r) => setTimeout(r, 1e3));
-          yield plugins.enablePlugin("obsidian-multi-git-plugin");
-          yield new Promise((r) => setTimeout(r, 1e3));
-          this.plugin.app.setting.open();
-          this.plugin.app.setting.openTabById("obsidian-multi-git-plugin");
-        } catch (error) {
-          console.error("Plugin reload error:", error);
-        }
-      });
+      headerEl.createEl("h2", { text: "Git Repository Manager", cls: "git-manager-title" });
       const controlsEl = container.createEl("div", { cls: "git-manager-controls" });
-      const refreshBtnContainer = controlsEl.createEl("div", { cls: "git-control-button" });
-      this.refreshButton = new import_obsidian.ButtonComponent(refreshBtnContainer).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
       const globalActionsEl = controlsEl.createEl("div", { cls: "git-global-actions" });
+      this.refreshButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
       this.commitAllButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u{1F4DD} Commit All").setTooltip("Commit changes to all repositories").onClick(() => {
         this.commitAllButton.setButtonText("\u23F3 Committing...");
         this.commitAllButton.setDisabled(true);
@@ -212,30 +140,6 @@ var GitManagerView = class extends import_obsidian.ItemView {
             this.pullAllButton.setButtonText("\u2B07\uFE0F Pull All");
             this.pullAllButton.setDisabled(false);
             this.pullAllButton.buttonEl.removeClass("is-loading");
-          }
-        }), 0);
-      });
-      const automodeEl = controlsEl.createEl("div", { cls: "git-automode-section" });
-      automodeEl.createEl("h3", { text: "Automode", cls: "git-automode-title" });
-      this.automodeStatusEl = automodeEl.createEl("div", { cls: "git-automode-status" });
-      this.updateAutomodeStatus();
-      const automodeControlsEl = automodeEl.createEl("div", { cls: "git-automode-controls" });
-      this.automodeToggleButton = new import_obsidian.ButtonComponent(automodeControlsEl.createEl("div", { cls: "git-control-button" })).setTooltip("Toggle Automode on/off").onClick(() => {
-        this.plugin.automodeManager.toggleAutomode();
-        this.updateAutomodeStatus();
-      });
-      this.automodeRunNowButton = new import_obsidian.ButtonComponent(automodeControlsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u26A1 Run Now").setTooltip("Run automode check immediately").onClick(() => {
-        this.automodeRunNowButton.setButtonText("\u23F3 Running...");
-        this.automodeRunNowButton.setDisabled(true);
-        this.automodeRunNowButton.buttonEl.addClass("is-loading");
-        setTimeout(() => __async(this, null, function* () {
-          try {
-            yield this.plugin.automodeManager.runNow();
-          } finally {
-            this.automodeRunNowButton.setButtonText("\u26A1 Run Now");
-            this.automodeRunNowButton.setDisabled(false);
-            this.automodeRunNowButton.buttonEl.removeClass("is-loading");
-            this.updateAutomodeStatus();
           }
         }), 0);
       });
@@ -314,6 +218,9 @@ var GitManagerView = class extends import_obsidian.ItemView {
             pullBtn.buttonEl.removeClass("is-loading");
           }
         }), 0);
+      });
+      const viewBtn = new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u{1F50D} View").setTooltip(`View files in ${repo.name}`).onClick(() => {
+        new import_obsidian.Notice(`Opening ${repo.name}`);
       });
       this.loadRepositoryStatus(repo, statusEl);
     });
@@ -1235,24 +1142,9 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
     this.plugin = plugin;
   }
   display() {
-    var _a, _b;
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: `Multi Git Manager Settings v${this.plugin.manifest.version} \u{1F680}` });
-    const updateBanner = containerEl.createEl("div", {
-      attr: {
-        style: "font-size: 1.5em; font-weight: bold; color: white; background: linear-gradient(90deg, blue, purple); margin: 20px 0; padding: 20px; border-radius: 15px; border: 4px solid cyan; text-align: center; box-shadow: 0 0 20px rgba(0,255,255,0.5);"
-      }
-    });
-    updateBanner.innerHTML = `\u{1F389} NEW SETTINGS CODE v${this.plugin.manifest.version} IS ACTIVE! \u{1F389}<br><small>If you see this, the code has been updated!</small>`;
-    const debugInfo = containerEl.createEl("div", {
-      cls: "setting-item-info",
-      attr: { style: "margin-bottom: 20px; padding: 10px; background: var(--background-secondary); border-radius: 5px;" }
-    });
-    debugInfo.createEl("div", { text: `Plugin Version: v${this.plugin.manifest.version}` });
-    debugInfo.createEl("div", { text: `Settings loaded: ${this.plugin.automodeSettings ? "Yes" : "No"}` });
-    debugInfo.createEl("div", { text: `Debug mode: ${(_a = this.plugin.automodeSettings) == null ? void 0 : _a.debugMode}` });
-    debugInfo.createEl("div", { text: `File logging: ${(_b = this.plugin.automodeSettings) == null ? void 0 : _b.enableFileLogging}` });
+    containerEl.createEl("h2", { text: "Multi Git Manager Settings" });
     containerEl.createEl("h3", { text: "Automode Settings" });
     new import_obsidian3.Setting(containerEl).setName("Enable Automode").setDesc("Automatically commit and push changes at regular intervals").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enabled).onChange((value) => __async(this, null, function* () {
       this.plugin.automodeSettings.enabled = value;
@@ -1291,31 +1183,23 @@ var MultiGitSettingTab = class extends import_obsidian3.PluginSettingTab {
       this.plugin.automodeSettings.autoSwitchToMain = value;
       yield this.plugin.saveSettings();
     })));
-    try {
-      containerEl.createEl("h3", { text: "Debug Settings" });
-      new import_obsidian3.Setting(containerEl).setName("Debug Mode").setDesc("Show debug messages as notifications (for troubleshooting)").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.debugMode || false).onChange((value) => __async(this, null, function* () {
-        this.plugin.automodeSettings.debugMode = value;
-        yield this.plugin.saveSettings();
-      })));
-      new import_obsidian3.Setting(containerEl).setName("Log Level").setDesc("Console logging level (check Developer Console: Ctrl+Shift+I)").addDropdown((dropdown) => dropdown.addOption("error", "Error only").addOption("warn", "Warning and above").addOption("info", "Info and above").addOption("debug", "All messages").setValue(this.plugin.automodeSettings.logLevel || "info").onChange((value) => __async(this, null, function* () {
-        this.plugin.automodeSettings.logLevel = value;
-        yield this.plugin.saveSettings();
-      })));
-      new import_obsidian3.Setting(containerEl).setName("Enable File Logging").setDesc("Save logs to a file in your vault directory").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enableFileLogging || false).onChange((value) => __async(this, null, function* () {
-        this.plugin.automodeSettings.enableFileLogging = value;
-        yield this.plugin.saveSettings();
-      })));
-      new import_obsidian3.Setting(containerEl).setName("Log File Path").setDesc("Path to log file (relative to vault directory)").addText((text) => text.setPlaceholder("multi-git-debug.log").setValue(this.plugin.automodeSettings.logFilePath || "multi-git-debug.log").onChange((value) => __async(this, null, function* () {
-        this.plugin.automodeSettings.logFilePath = value || "multi-git-debug.log";
-        yield this.plugin.saveSettings();
-      })));
-    } catch (error) {
-      containerEl.createEl("div", {
-        text: `Error rendering debug settings: ${error}`,
-        attr: { style: "color: red; margin: 10px; padding: 10px; background: var(--background-modifier-error);" }
-      });
-      console.error("[Multi-Git] Settings rendering error:", error);
-    }
+    containerEl.createEl("h3", { text: "Debug Settings" });
+    new import_obsidian3.Setting(containerEl).setName("Debug Mode").setDesc("Show debug messages as notifications (for troubleshooting)").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.debugMode || false).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.debugMode = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Log Level").setDesc("Console logging level (check Developer Console: Ctrl+Shift+I)").addDropdown((dropdown) => dropdown.addOption("error", "Error only").addOption("warn", "Warning and above").addOption("info", "Info and above").addOption("debug", "All messages").setValue(this.plugin.automodeSettings.logLevel || "info").onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.logLevel = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Enable File Logging").setDesc("Save logs to a file in your vault directory").addToggle((toggle) => toggle.setValue(this.plugin.automodeSettings.enableFileLogging || false).onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.enableFileLogging = value;
+      yield this.plugin.saveSettings();
+    })));
+    new import_obsidian3.Setting(containerEl).setName("Log File Path").setDesc("Path to log file (relative to vault directory)").addText((text) => text.setPlaceholder("multi-git-debug.log").setValue(this.plugin.automodeSettings.logFilePath || "multi-git-debug.log").onChange((value) => __async(this, null, function* () {
+      this.plugin.automodeSettings.logFilePath = value || "multi-git-debug.log";
+      yield this.plugin.saveSettings();
+    })));
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

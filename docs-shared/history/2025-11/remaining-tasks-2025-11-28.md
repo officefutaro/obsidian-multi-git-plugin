@@ -3,18 +3,20 @@
 
 ## 🔴 緊急度: 高
 
-### 1. **v1.1.5.8 動作確認テスト**（次回セッション最優先）
-- [ ] **ログ調査完了**: multi-git-debug.log にエラーなし確認済み ✅
-- [ ] Obsidianでのv1.1.5.8プラグイン更新確認
-- [ ] **リボンボタンテスト**: Push/Pull/Commit/Managerの4ボタン動作確認
-- [ ] **日本語パスでのAutomodeテスト**: エラー修正の検証
-- [ ] GitHub Actions: https://github.com/officefutaro/obsidian-multi-git-plugin/actions
-- [ ] リリースページ確認: https://github.com/officefutaro/obsidian-multi-git-plugin/releases
+### 1. v1.1.5.6リリースの動作確認
+- [ ] GitHub Actionsワークフロー完了確認
+  - URL: https://github.com/officefutaro/obsidian-multi-git-plugin/actions
+- [ ] リリースページでファイルサイズ確認
+  - main.js: 57KB（正常） vs 22bytes（異常）
+  - URL: https://github.com/officefutaro/obsidian-multi-git-plugin/releases
+- [ ] リリースアセット（ZIP、各ファイル）のダウンロードテスト
 
-### 2. **特殊文字エラー修正の検証**
-- [ ] 以前の"Invalid path '/347'"エラーの再発確認
-- [ ] 特殊文字・日本語を含むコミットメッセージテスト
-- [ ] 大量リポジトリ環境（281個）での安定性確認
+### 2. BRATインストール検証
+- [ ] Obsidian BRATプラグインでのインストールテスト
+  - リポジトリURL: https://github.com/officefutaro/obsidian-multi-git-plugin
+- [ ] プラグイン動作確認（Git操作、UI表示）
+- [ ] バージョン表示がv1.1.5.6になっているか確認
+- [ ] 以前のv1.1.5.5からの更新テスト
 
 ## 🟡 緊急度: 中
 

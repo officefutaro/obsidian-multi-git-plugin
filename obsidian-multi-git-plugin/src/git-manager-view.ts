@@ -40,106 +40,20 @@ export class GitManagerView extends ItemView {
 
         // Header Section  
         const headerEl = container.createEl('div', { cls: 'git-manager-header' });
-        headerEl.createEl('h2', { text: `Git Repository Manager v${this.plugin.manifest.version} 🔥`, cls: 'git-manager-title' });
+        headerEl.createEl('h2', { text: 'Git Repository Manager', cls: 'git-manager-title' });
         
-        // URGENT UPDATE NOTICE - IMPOSSIBLE TO MISS
-        const urgentNotice = headerEl.createEl('div', { 
-            attr: { 
-                style: 'font-size: 1.3em; font-weight: bold; color: white; background: linear-gradient(45deg, red, orange); margin: 15px 0; padding: 15px; border-radius: 10px; border: 3px solid yellow; text-align: center; animation: blink 1s infinite;'
-            }
-        });
-        urgentNotice.innerHTML = `⚠️ CODE UPDATED TO v${this.plugin.manifest.version} - IF YOU SEE THIS, NEW CODE IS RUNNING! ⚠️`;
-        
-        // Add CSS animation
-        const style = container.createEl('style');
-        style.textContent = `
-            @keyframes blink {
-                0% { opacity: 1; }
-                50% { opacity: 0.5; }
-                100% { opacity: 1; }
-            }
-        `;
-        
-        // FORCE VERSION DISPLAY - ALWAYS VISIBLE
-        const forceVersionEl = headerEl.createEl('div', { 
-            attr: { 
-                style: 'font-size: 1.1em; font-weight: bold; color: var(--text-accent); margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 5px; border: 2px solid var(--color-accent);'
-            }
-        });
-        forceVersionEl.createEl('div', { text: `🚨 PLUGIN VERSION CHECK v${this.plugin.manifest.version} 🚨` });
-        
-        // Get actual plugin info from app
-        const pluginInstance = (this.app as any).plugins?.plugins?.['obsidian-multi-git-plugin'];
-        const manifestData = pluginInstance?.manifest;
-        
-        const debugInfoEl = headerEl.createEl('div', { 
-            attr: { 
-                style: 'font-size: 0.9em; margin: 10px 0; padding: 10px; background: var(--background-modifier-form-field); border-radius: 5px;'
-            }
-        });
-        debugInfoEl.createEl('div', { text: `Expected Version: v${this.plugin.manifest.version}` });
-        debugInfoEl.createEl('div', { text: `Manifest Version: ${manifestData?.version || 'UNKNOWN'}` });
-        debugInfoEl.createEl('div', { text: `Plugin ID: ${manifestData?.id || 'UNKNOWN'}` });
-        debugInfoEl.createEl('div', { text: `Plugin Name: ${manifestData?.name || 'UNKNOWN'}` });
-        debugInfoEl.createEl('div', { text: `Plugin Found: ${pluginInstance ? 'YES' : 'NO'}` });
-        debugInfoEl.createEl('div', { text: `Settings Object: ${this.plugin.automodeSettings ? 'EXISTS' : 'MISSING'}` });
-        debugInfoEl.createEl('div', { text: `Current Time: ${new Date().toLocaleString()}` });
-        
-        // Plugin location detection
-        const locationInfoEl = headerEl.createEl('div', { 
-            attr: { 
-                style: 'font-size: 0.8em; margin: 5px 0; padding: 8px; background: var(--background-modifier-error); border-radius: 3px; color: var(--text-error);'
-            }
-        });
-        
-        // Check plugin directory
-        const allPlugins = (this.app as any).plugins?.manifests || {};
-        const ourPlugin = allPlugins['obsidian-multi-git-plugin'];
-        locationInfoEl.createEl('div', { text: `Plugin in manifests: ${ourPlugin ? 'YES' : 'NO'}` });
-        if (ourPlugin) {
-            locationInfoEl.createEl('div', { text: `Manifest Name: ${ourPlugin.name}` });
-            locationInfoEl.createEl('div', { text: `Manifest Version: ${ourPlugin.version}` });
-        }
-        
-        // Check all plugins with similar names
-        const similarPlugins = Object.keys(allPlugins).filter(id => id.includes('git') || allPlugins[id].name?.toLowerCase().includes('git'));
-        locationInfoEl.createEl('div', { text: `Git-related plugins: ${similarPlugins.join(', ')}` });
-        
-        // Settings diagnostic button
-        const diagButton = headerEl.createEl('button', { 
-            text: '🔍 Force Plugin Reload + Settings',
-            attr: { 
-                style: 'margin-top: 10px; padding: 5px 10px; background: var(--color-red); color: white; border: none; border-radius: 3px; cursor: pointer;'
-            }
-        });
-        diagButton.onclick = async () => {
-            // Force reload this plugin
-            try {
-                const plugins = (this.app as any).plugins;
-                await plugins.disablePlugin('obsidian-multi-git-plugin');
-                await new Promise(r => setTimeout(r, 1000));
-                await plugins.enablePlugin('obsidian-multi-git-plugin');
-                await new Promise(r => setTimeout(r, 1000));
-                
-                this.plugin.app.setting.open();
-                this.plugin.app.setting.openTabById('obsidian-multi-git-plugin');
-            } catch (error) {
-                console.error('Plugin reload error:', error);
-            }
-        };
         
         // Controls Section
         const controlsEl = container.createEl('div', { cls: 'git-manager-controls' });
         
+        // Global Actions Row
+        const globalActionsEl = controlsEl.createEl('div', { cls: 'git-global-actions' });
+        
         // Refresh Button
-        const refreshBtnContainer = controlsEl.createEl('div', { cls: 'git-control-button' });
-        this.refreshButton = new ButtonComponent(refreshBtnContainer)
+        this.refreshButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
             .setButtonText('🔄 Refresh')
             .setTooltip('Refresh repository status')
             .onClick(() => this.refreshView());
-
-        // Global Actions
-        const globalActionsEl = controlsEl.createEl('div', { cls: 'git-global-actions' });
         
         this.commitAllButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
             .setButtonText('📝 Commit All')
@@ -202,43 +116,6 @@ export class GitManagerView extends ItemView {
                 }, 0);
             });
 
-        // Automode Controls
-        const automodeEl = controlsEl.createEl('div', { cls: 'git-automode-section' });
-        automodeEl.createEl('h3', { text: 'Automode', cls: 'git-automode-title' });
-        
-        // Automode Status
-        this.automodeStatusEl = automodeEl.createEl('div', { cls: 'git-automode-status' });
-        this.updateAutomodeStatus();
-        
-        // Automode Controls
-        const automodeControlsEl = automodeEl.createEl('div', { cls: 'git-automode-controls' });
-        
-        this.automodeToggleButton = new ButtonComponent(automodeControlsEl.createEl('div', { cls: 'git-control-button' }))
-            .setTooltip('Toggle Automode on/off')
-            .onClick(() => {
-                this.plugin.automodeManager.toggleAutomode();
-                this.updateAutomodeStatus();
-            });
-
-        this.automodeRunNowButton = new ButtonComponent(automodeControlsEl.createEl('div', { cls: 'git-control-button' }))
-            .setButtonText('⚡ Run Now')
-            .setTooltip('Run automode check immediately')
-            .onClick(() => {
-                this.automodeRunNowButton.setButtonText('⏳ Running...');
-                this.automodeRunNowButton.setDisabled(true);
-                this.automodeRunNowButton.buttonEl.addClass('is-loading');
-                
-                setTimeout(async () => {
-                    try {
-                        await this.plugin.automodeManager.runNow();
-                    } finally {
-                        this.automodeRunNowButton.setButtonText('⚡ Run Now');
-                        this.automodeRunNowButton.setDisabled(false);
-                        this.automodeRunNowButton.buttonEl.removeClass('is-loading');
-                        this.updateAutomodeStatus();
-                    }
-                }, 0);
-            });
 
         // Repository List Container
         this.repositoryContainer = container.createEl('div', { cls: 'git-repository-container' });
@@ -341,6 +218,14 @@ export class GitManagerView extends ItemView {
                         pullBtn.buttonEl.removeClass('is-loading');
                     }
                 }, 0);
+            });
+
+        const viewBtn = new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
+            .setButtonText('🔍 View')
+            .setTooltip(`View files in ${repo.name}`)
+            .onClick(() => {
+                // Open file explorer or show repository files
+                new Notice(`Opening ${repo.name}`);
             });
 
         // Load repository status
