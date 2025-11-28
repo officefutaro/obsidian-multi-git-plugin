@@ -159,7 +159,15 @@ export class AutomodeManager {
 
             // 3. Generate commit message and commit
             const message = await this.generateCommitMessage(repo);
-            await this.plugin.executeGitCommand(repo.path, `commit -m "${message}"`);
+            // Properly escape message for cross-platform compatibility
+            const escapedMessage = message
+                .replace(/\\/g, '\\\\')  // Escape backslashes first
+                .replace(/"/g, '\\"')     // Escape double quotes
+                .replace(/`/g, '\\`')     // Escape backticks
+                .replace(/\$/g, '\\$')    // Escape dollar signs
+                .replace(/!/g, '\\!');    // Escape exclamation marks
+            
+            await this.plugin.executeGitCommand(repo.path, `commit -m "${escapedMessage}"`);
 
             // 4. Push if configured
             if (this.plugin.automodeSettings.autoPush) {

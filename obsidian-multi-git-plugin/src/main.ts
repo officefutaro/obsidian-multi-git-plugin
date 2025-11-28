@@ -512,7 +512,15 @@ class GitCommitModal extends Modal {
             for (const repoPath of this.selectedRepos) {
                 try {
                     await this.plugin.executeGitCommand(repoPath, 'add .');
-                    await this.plugin.executeGitCommand(repoPath, `commit -m "${message.replace(/"/g, '\\"')}"`);
+                    // Properly escape message for cross-platform compatibility
+                    const escapedMessage = message
+                        .replace(/\\/g, '\\\\')  // Escape backslashes first
+                        .replace(/"/g, '\\"')     // Escape double quotes
+                        .replace(/`/g, '\\`')     // Escape backticks
+                        .replace(/\$/g, '\\$')    // Escape dollar signs
+                        .replace(/!/g, '\\!');    // Escape exclamation marks
+                    
+                    await this.plugin.executeGitCommand(repoPath, `commit -m "${escapedMessage}"`);
                     
                     const repoName = this.plugin.repositories.find(r => r.path === repoPath)?.name || 'Repository';
                     new Notice(`✓ Committed to ${repoName}`);

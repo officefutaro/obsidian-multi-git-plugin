@@ -611,7 +611,8 @@ var AutomodeManager = class {
         }
         yield this.plugin.executeGitCommand(repo.path, "add .");
         const message = yield this.generateCommitMessage(repo);
-        yield this.plugin.executeGitCommand(repo.path, `commit -m "${message}"`);
+        const escapedMessage = message.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/`/g, "\\`").replace(/\$/g, "\\$").replace(/!/g, "\\!");
+        yield this.plugin.executeGitCommand(repo.path, `commit -m "${escapedMessage}"`);
         if (this.plugin.automodeSettings.autoPush) {
           const pushBranch = this.plugin.automodeSettings.useSeparateBranch ? this.plugin.automodeSettings.automodeBranchName : yield this.getCurrentBranch(repo.path);
           yield this.plugin.executeGitCommand(repo.path, `push origin ${pushBranch}`);
@@ -1148,7 +1149,8 @@ var GitCommitModal = class extends import_obsidian3.Modal {
         for (const repoPath of this.selectedRepos) {
           try {
             yield this.plugin.executeGitCommand(repoPath, "add .");
-            yield this.plugin.executeGitCommand(repoPath, `commit -m "${message.replace(/"/g, '\\"')}"`);
+            const escapedMessage = message.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/`/g, "\\`").replace(/\$/g, "\\$").replace(/!/g, "\\!");
+            yield this.plugin.executeGitCommand(repoPath, `commit -m "${escapedMessage}"`);
             const repoName = ((_a = this.plugin.repositories.find((r) => r.path === repoPath)) == null ? void 0 : _a.name) || "Repository";
             new import_obsidian3.Notice(`\u2713 Committed to ${repoName}`);
           } catch (error) {
