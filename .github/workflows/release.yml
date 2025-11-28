@@ -21,25 +21,71 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        cd obsidian-multi-git-plugin
+        npm ci
+        
+    - name: Build plugin
+      run: |
+        cd obsidian-multi-git-plugin
+        npm run build
+        
+    - name: Validate build files
+      run: |
+        cd obsidian-multi-git-plugin
+        
+        # Check if required files exist
+        if [ ! -f "main.js" ]; then
+          echo "ERROR: main.js not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "manifest.json" ]; then
+          echo "ERROR: manifest.json not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "styles.css" ]; then
+          echo "ERROR: styles.css not found!"
+          exit 1
+        fi
+        
+        # Check file sizes (main.js should be at least 50KB)
+        MAIN_SIZE=$(stat -c%s "main.js")
+        if [ $MAIN_SIZE -lt 50000 ]; then
+          echo "ERROR: main.js is too small ($MAIN_SIZE bytes). Build may have failed!"
+          exit 1
+        fi
+        
+        # Check manifest.json has correct structure
+        if ! grep -q '"id"' manifest.json || ! grep -q '"version"' manifest.json; then
+          echo "ERROR: manifest.json is malformed!"
+          exit 1
+        fi
+        
+        echo "✅ All files validated successfully"
+        echo "main.js size: $MAIN_SIZE bytes"
+        echo "manifest.json size: $(stat -c%s manifest.json) bytes"
+        echo "styles.css size: $(stat -c%s styles.css) bytes"
+    
     - name: Create release files
       run: |
         # Create release directory
         mkdir -p release
         
-        # Copy required files for BRAT
-        cp manifest.json release/
+        # Copy built files from obsidian-multi-git-plugin folder
+        cp obsidian-multi-git-plugin/main.js release/
+        cp obsidian-multi-git-plugin/manifest.json release/
+        cp obsidian-multi-git-plugin/styles.css release/
         
-        # Create minimal main.js if it doesn't exist
-        if [ ! -f main.js ]; then
-          echo "/* Obsidian Plugin */" > release/main.js
-        else
-          cp main.js release/
-        fi
-        
-        # Create styles.css if needed
-        if [ -f styles.css ]; then
-          cp styles.css release/
-        fi
+        # Verify files were copied correctly
+        ls -la release/
         
         # Create zip file
         cd release
