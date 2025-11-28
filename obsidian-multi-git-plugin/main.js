@@ -99,8 +99,9 @@ var GitManagerView = class extends import_obsidian.ItemView {
       const headerEl = container.createEl("div", { cls: "git-manager-header" });
       headerEl.createEl("h2", { text: "Git Repository Manager", cls: "git-manager-title" });
       const controlsEl = container.createEl("div", { cls: "git-manager-controls" });
+      const refreshBtnContainer = controlsEl.createEl("div", { cls: "git-control-button" });
+      this.refreshButton = new import_obsidian.ButtonComponent(refreshBtnContainer).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
       const globalActionsEl = controlsEl.createEl("div", { cls: "git-global-actions" });
-      this.refreshButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u{1F504} Refresh").setTooltip("Refresh repository status").onClick(() => this.refreshView());
       this.commitAllButton = new import_obsidian.ButtonComponent(globalActionsEl.createEl("div", { cls: "git-control-button" })).setButtonText("\u{1F4DD} Commit All").setTooltip("Commit changes to all repositories").onClick(() => {
         this.commitAllButton.setButtonText("\u23F3 Committing...");
         this.commitAllButton.setDisabled(true);
@@ -218,9 +219,6 @@ var GitManagerView = class extends import_obsidian.ItemView {
             pullBtn.buttonEl.removeClass("is-loading");
           }
         }), 0);
-      });
-      const viewBtn = new import_obsidian.ButtonComponent(actionsEl.createEl("div", { cls: "git-action-button" })).setButtonText("\u{1F50D} View").setTooltip(`View files in ${repo.name}`).onClick(() => {
-        new import_obsidian.Notice(`Opening ${repo.name}`);
       });
       this.loadRepositoryStatus(repo, statusEl);
     });

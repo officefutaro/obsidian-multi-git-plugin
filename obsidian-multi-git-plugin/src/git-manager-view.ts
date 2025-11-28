@@ -46,14 +46,15 @@ export class GitManagerView extends ItemView {
         // Controls Section
         const controlsEl = container.createEl('div', { cls: 'git-manager-controls' });
         
-        // Global Actions Row
-        const globalActionsEl = controlsEl.createEl('div', { cls: 'git-global-actions' });
-        
         // Refresh Button
-        this.refreshButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
+        const refreshBtnContainer = controlsEl.createEl('div', { cls: 'git-control-button' });
+        this.refreshButton = new ButtonComponent(refreshBtnContainer)
             .setButtonText('🔄 Refresh')
             .setTooltip('Refresh repository status')
             .onClick(() => this.refreshView());
+
+        // Global Actions
+        const globalActionsEl = controlsEl.createEl('div', { cls: 'git-global-actions' });
         
         this.commitAllButton = new ButtonComponent(globalActionsEl.createEl('div', { cls: 'git-control-button' }))
             .setButtonText('📝 Commit All')
@@ -218,14 +219,6 @@ export class GitManagerView extends ItemView {
                         pullBtn.buttonEl.removeClass('is-loading');
                     }
                 }, 0);
-            });
-
-        const viewBtn = new ButtonComponent(actionsEl.createEl('div', { cls: 'git-action-button' }))
-            .setButtonText('🔍 View')
-            .setTooltip(`View files in ${repo.name}`)
-            .onClick(() => {
-                // Open file explorer or show repository files
-                new Notice(`Opening ${repo.name}`);
             });
 
         // Load repository status
