@@ -188,6 +188,21 @@ export default class MultiGitPlugin extends Plugin {
             this.openGitManagerView();
         });
 
+        // Add Git Push ribbon icon
+        this.addRibbonIcon('upload', 'Git Push', () => {
+            this.gitPush();
+        });
+
+        // Add Git Pull ribbon icon  
+        this.addRibbonIcon('download', 'Git Pull', () => {
+            this.gitPull();
+        });
+
+        // Add Git Commit ribbon icon
+        this.addRibbonIcon('git-commit', 'Git Commit', () => {
+            this.showCommitModal();
+        });
+
         this.registerInterval(
             window.setInterval(() => this.updateStatusBar(), 30000)
         );

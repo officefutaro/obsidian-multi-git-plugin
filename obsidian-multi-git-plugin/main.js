@@ -864,6 +864,15 @@ var MultiGitPlugin = class extends import_obsidian3.Plugin {
       this.addRibbonIcon("git-branch", "Git Manager View", () => {
         this.openGitManagerView();
       });
+      this.addRibbonIcon("upload", "Git Push", () => {
+        this.gitPush();
+      });
+      this.addRibbonIcon("download", "Git Pull", () => {
+        this.gitPull();
+      });
+      this.addRibbonIcon("git-commit", "Git Commit", () => {
+        this.showCommitModal();
+      });
       this.registerInterval(
         window.setInterval(() => this.updateStatusBar(), 3e4)
       );
